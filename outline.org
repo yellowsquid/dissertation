@@ -1,0 +1,97 @@
+* Overview
+** Introduction (1300)
+   * Principal motivation
+   * How it fits into CS
+   * Survey of related work
+*** Motivation
+    * [ ] What's the problem I am solving?
+    * [ ] Why is this problem important?
+*** Existing Work
+    * [ ] Who's done this before?
+    * [ ] What did they do?
+    * [ ] How is my work different?
+*** Aims
+    * [ ] What am I doing?
+    * [ ] Overview of the algorithms
+    * [ ] Benefits of these algorithms
+** Preparation (1300)
+   * What was done before code
+*** Background
+    * [ ] "New" computer science
+*** Requirements Analysis
+    * [ ] What project must achieve
+    * [ ] Why they are requirements
+*** System Architecture
+    * [ ] Detail the overall process
+    * [ ] Highlight what the focus of the project was
+*** Starting Point
+    * [ ] Dependencies used
+    * [ ] Knowledge from the course
+    * [ ] Knowledge from papers
+*** Software Engineering
+    * [ ] Languages and Libraries
+    * [ ] Project management
+    * [ ] Version control
+    * [ ] Development tools
+** Implementation (4000)
+   * What was produced
+   * High-level code if any
+   * Repository overview
+   * Major milestones
+*** System Architecture
+    * [ ] Actual components and interactions
+*** Frameworks, Libraries and Tools
+    * [ ] Language used
+    * [ ] Build tools
+    * [ ] Important dependencies
+*** Important Algorithms or Components
+    * [ ] Detail important algorithms
+    * [ ] High-level code
+*** Repository Overview
+    * [ ] High-level code structure
+** Evaluation (1500)
+   * Signs of success
+   * Systematic evaluation
+   * Remember confidence intervals
+   * Were the goals achieved
+   * Did the project work?
+*** Evaluation Methodology
+    * [ ] How were evaluations done?
+*** Quantitative Analysis
+    * [ ] List hypotheses
+    * [ ] Quantitatively evaluate (maybe with actual statistics)
+*** Comparison
+    * [ ] List hypotheses
+    * [ ] Quantitatively evaluate (maybe with actual statistics)
+*** Threats to Validity
+    * [ ] Assumptions made
+    * [ ] How assumption could render results meaningless
+*** Measure of Success
+    * [ ] List success criteria
+** Conclusions (500)
+   * Lessons learned
+   * Future planning
+*** Accomplishments
+    * [ ] What was achieved?
+*** Lessons Learned
+    * [ ] Personal evaluation
+*** Future Work
+    * [ ] What could this project lead to?
+* Tasks
+** Research
+   * [-] Read three dissertations [1/3]
+     * [X] One
+     * [ ] Two
+     * [ ] Three
+** Writing
+   * [ ] Make skeleton
+   * [ ] Write chapters
+     * [ ] introduction
+     * [ ] preparation
+     * [ ] theoretical implementation
+     * [ ] implementation
+     * [ ] evaluation
+     * [ ] conclusion
+** Development
+   * [ ] Add extensive unit tests
+   * [ ] Complete an extension

@@ -1,0 +1,117 @@
+# #+latex_header: \usepackage[hyperref=true,backref=true,url=true,backend=biber,natbib=true]{biblatex}
+#+latex_header: \usepackage[backend=biber]{biblatex}
+#+latex_header: \addbibresource{diss.bib}
+
+* Introduction
+** Existing Work
+** Aims
+* Preparation
+** Background
+   There are two areas of computer science used by this project which are rarely
+   seen together. The first is formal languages. In particular, an extension to
+   regular expressions. The other is type systems.
+   
+*** Formal Languages
+    NOTE: This could possibly benefit from a couple of figures.
+    
+    NOTE: Empty brackets indicate somewhere a citation might be useful.
+
+    NOTE: Much of the second half is just a summary of Krishnaswami and Yallop.
+
+    A language is a set of strings. Some notable examples are: the empty
+    language, \( \emptyset \), containing no strings; the language containing
+    only the empty string, \( \{ \epsilon \} \); and the universal language, \(
+    U \), containing all strings.
+    
+    A /recogniser/ is an algorithm that determines whether a given string is in
+    a language. We can group languages by the minimum computational complexity
+    of a recogniser. For example, a language is /regular/ if it can be
+    recognised in constant space.
+
+    A /regular expression/ is a description of a /regular language/ [].
+    Different expressions can be composed by three operators: concatenation,
+    alternation and Kleene star. The regular expression \( baaa* \) describes a
+    language used by sheep, and \( ((\epsilon|b)ooga)* \) a language used by
+    stereotypical cave-people.
+
+    Whilst regular expressions are useful, they have many limitations. For use
+    in artificial languages, the most important is that regular expressions
+    cannot match parentheses. That requires /context-free languages/.
+    Recognisers for context-free languages need linear space and polynomial
+    time.
+
+    Leiß cite:10.1007/BFb0023771 showed that much like how regular expressions
+    describe regular languages [], /\(\mu\)-regular expressions/ describe
+    context-free languages. These are regular expressions extended with a
+    fixed-point operator. This allows for expressions such as
+    \( \mu\alpha.(<\alpha>|a) \),
+    which is the language for the strings ~a~, ~<a>~, ~<<a>>~, ...
+
+    Leiß cite:10.1007/BFb0023771 also found that fixed-point operators can
+    replace the need for the Kleene star operator.
+    \( a* = \mu\alpha.\epsilon|a\alpha \)
+
+    Krishnaswami and Yallop cite:10.1145/3314221.3314625 found there are three
+    properties of languages we find important, dubbed Null, First and Flast. A
+    language \( L \) is Null if \( \epsilon \in L \). A character is in the
+    First set of a language if there is a string in the language starting with
+    that character. For example, \( ((\epsilon|b)ooga)* \) has First set
+    \( \{ o, b \} \).
+
+    The Flast set of a language is harder to define. Suppose there is a string
+    \( u \in L \). If there is some string \( v \) and character \( x \) such
+    that \( uxv \in L \), then \( x \) is in the Flast set of \( L \).
+    Intuitively, it is the set of characters that follow an accepted string and
+    can make a new string.
+
+*** Types
+    We describe a type system over \(\mu\)-regular expressions, and hence
+    context-free languages.
+    
+    We use the definition of types and the type system developed by Krishnaswami
+   ; and Yallop cite:10.1145/3314221.3314625. A /type/ is a triple of three
+    values: \textsc{Null}, \textsc{First} and \textsc{Flast}. Two important
+    types are \( \bot= \{ \mathsc{Null} = \mathbf{false}, \mathsc{First} =
+    \emptyset, \mathsc{Flast} = \emptyset \} \) and \( \epsilon = \{
+    \mathsc{Null} = \mathbf{true}, \mathsc{First} = \emptyset, \mathsc{Flast} =
+    \emptyset \} \).
+    
+    A language /satisfies/ a type if the type over-approximates the language
+    properties. For example, \( \emptyset \) satisfies all types, because it has
+    the most restrictive properties.
+
+    Next, we describe guarded and unguarded variables. In most programming
+    languages, Once a variable is defined, it can be used anywhere. This is not
+    the case in this type system. When a fixed point introduces a variable, it
+    cannot be used immediately -- it is /guarded/. The variable can only be used
+    when it becomes /unguarded/, which happens on the right side of
+    concatenations.
+
+    In the expression \( \mu\alpha.\alpha x \), \( α \) is guarded, so cannot be
+    referenced. However, in the expression \( \mu\alpha.\epsilon|a\alpha \), it
+    appears on the right of a concatenation, so it is unguarded.
+
+    A /variable context/ is a pair of maps from variables to types. The two maps
+    correspond to guarded and unguarded variables. Because of this, a variable
+    can only appear in one of the two maps at a time.
+    
+    A typing judgement is a relation between variable contexts, expressions, and
+    types. \( \Gamma, \Delta \vdash e : \tau \) can be read: expression \( e \)
+    has type \( \tau \) in context \( \Gamma, \Delta \). Krishnaswami and Yallop
+    cite:10.1145/3314221.3314625 found that if an expression and type are
+    related by the typing judgement in figure [], then the language of the
+    expression satisfies the type.
+    
+    TODO: insert type rules figure
+    
+** Requirements Analysis
+** Starting Point
+** Software Engineering
+* Implementation
+* Evaluation
+* Conclusion
+* References
+  bibliographystyle:alpha
+  bibliography:diss.bib
+  
+  \printbibliography
