@@ -1,5 +1,5 @@
-# #+latex_header: \usepackage[hyperref=true,backref=true,url=true,backend=biber,natbib=true]{biblatex}
-#+latex_header: \usepackage[backend=biber]{biblatex}
+#+latex_header: \usepackage[hyperref=true,backref=true,url=true,backend=biber,natbib=true]{biblatex}
+#+latex_header: \usepackage{parskip,hyperref}
 #+latex_header: \addbibresource{diss.bib}
 
 * Introduction
@@ -111,7 +111,4 @@
 * Evaluation
 * Conclusion
 * References
-  bibliographystyle:alpha
-  bibliography:diss.bib
-  
-  \printbibliography
+  \printbibliography[heading=none]{}
