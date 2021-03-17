@@ -1,22 +1,86 @@
-#+latex_header: \usepackage[hyperref=true,backref=true,url=true,backend=biber,natbib=true]{biblatex}
-#+latex_header: \usepackage{parskip,hyperref}
+#+latex_class: dissertation
+#+latex_class_options: [12pt,a4paper,twoside,openright]
+#+latex_header: \usepackage[hyperref=true,url=true,backend=biber,natbib=true]{biblatex}
+#+latex_header: \usepackage[margin=1in]{geometry}
+#+latex_header: \usepackage{parskip}
 #+latex_header: \addbibresource{diss.bib}
+#+options: H:6
 
+\pagestyle{headings}
 * Introduction
-** Existing Work
-** Aims
+  A parser is a function that transforms a linear stream of data into a
+  tree-like structure. They are used by nearly all interpreters and compilers to
+  convert the linear text presented by the file system into an expression tree
+  to analyse and evaluate.
+  
+  Generating parsers for programming languages has been done in practice for
+  over 60 years cite:null. Writing the hundreds of lines of necessary to
+  describe how to parse some input requires a huge amount of repetition and
+  boiler-plate code. Parser generators can express the same logic in only a few
+  tens of lines of code.
+
+  Modern parser generators transform descriptions of context-free grammars into
+  automata. This allows for linear time parsers cite:null and high-quality error
+  reporting cite:null.
+
+  With the increasing popularity of more powerful type systems, another approach
+  to parsing is becoming increasingly common. Parser combinators are
+  higher-order functions that take a number of parsing functions and combine
+  them into a new, more complex parsing function. Unfortunately, most parser
+  combinators rely on some form of backtracking before they can reject an input
+  string.
+
+  \(\mu\)-regular expressions cite:10.1007/BFb0023771 are a small extension to
+  regular expressions. \(\mu\)-regular expressions offer several advantages over
+  the current standard, Backus-Naur form, for describing parsers. The key
+  difference is that \(\mu\)-regular expressions are lexically scoped, which
+  makes them prime targets for embedding within programming languages.
+
+  Krishnaswami and Yallop cite:10.1145/3314221.3314625 designed a type system
+  (henceforth known as the /KY type system/) for \(\mu\)-regular expressions
+  that only accepts languages that can be parsed using recursive descent in
+  linear time. They also implemented a parser generator using this type system
+  in OCaml, providing evidence it's performance is comparable to other parser
+  generators.
+  
+** Project Overview
+   My project is largely a reproduction of Krishnaswami and Yallop
+   cite:10.1145/3314221.3314625.
+
+   *NOTE: let's make "macros" more formal by defining them as functions, where
+   the typing rule /is/ syntactic substitution.*
+   
+   I start in section ref:null by defining an extension of \(\mu\)-regular
+   expressions adding functions. We extend results from Krishnaswami and Yallop
+   cite:10.1145/3314221.3314625 to these /\(\lambda\mu\)-regular expressions/.
+   The extended type system will be called the /LM type system/.
+
+   Next, I design /Nibble/ in section ref:null. Nibble is a new DSL for
+   context-free languages. The syntax is based on \(\lambda\mu\)-regular
+   expressions.
+
+   In section ref:null, I implement /Chomp/, a typed parser generator for
+   Nibble. Chomp uses the LM type system to ensure it's input is suitable for
+   transformation into a recursive-descent parser. Chomp is implemented in Rust,
+   and produces Rust source code as output --- a /chewed parser/.
+   
+   I end by evaluating the performance of chewed parsers. Critically in section
+   ref:null we show that chewed parsers operate in linear time. Section ref:null
+   demonstrates that chewed parsers have comparable performance to other
+   generated parsers. Finally section ref:null demonstrates that Nibble is
+   potentially usable in practice.
 * Preparation
 ** Background
-   There are two areas of computer science used by this project which are rarely
-   seen together. The first is formal languages. In particular, an extension to
-   regular expressions. The other is type systems.
+   We start by recapping some knowledge of formal languages. We then discuss
+   some useful language properties. Next, we discuss some approaches to writing
+   parsers, both by hand and by generation. Finally, we discuss the KY type
+   system and show how it avoids some performance problems.
    
 *** Formal Languages
-    NOTE: This could possibly benefit from a couple of figures.
+    *NOTE: This could possibly benefit from a couple of figures.*
     
-    NOTE: Empty brackets indicate somewhere a citation might be useful.
-
-    NOTE: Much of the second half is just a summary of Krishnaswami and Yallop.
+    *NOTE: Much of the second half is just a summary of Krishnaswami and
+    Yallop.*
 
     A language is a set of strings. Some notable examples are: the empty
     language, \( \emptyset \), containing no strings; the language containing
@@ -28,7 +92,7 @@
     of a recogniser. For example, a language is /regular/ if it can be
     recognised in constant space.
 
-    A /regular expression/ is a description of a /regular language/ [].
+    A /regular expression/ is a description of a /regular language/ cite:null.
     Different expressions can be composed by three operators: concatenation,
     alternation and Kleene star. The regular expression \( baaa* \) describes a
     language used by sheep, and \( ((\epsilon|b)ooga)* \) a language used by
@@ -41,11 +105,11 @@
     time.
 
     Leiß cite:10.1007/BFb0023771 showed that much like how regular expressions
-    describe regular languages [], /\(\mu\)-regular expressions/ describe
+    describe regular languages cite:null, /\(\mu\)-regular expressions/ describe
     context-free languages. These are regular expressions extended with a
     fixed-point operator. This allows for expressions such as
-    \( \mu\alpha.(<\alpha>|a) \),
-    which is the language for the strings ~a~, ~<a>~, ~<<a>>~, ...
+    \( \mu\alpha.([\alpha]|a) \),
+    which is the language for the strings ~a~, ~[a]~, ~[[a]]~, ...
 
     Leiß cite:10.1007/BFb0023771 also found that fixed-point operators can
     replace the need for the Kleene star operator.
@@ -63,18 +127,98 @@
     that \( uxv \in L \), then \( x \) is in the Flast set of \( L \).
     Intuitively, it is the set of characters that follow an accepted string and
     can make a new string.
-
-*** Types
-    We describe a type system over \(\mu\)-regular expressions, and hence
-    context-free languages.
     
-    We use the definition of types and the type system developed by Krishnaswami
-   ; and Yallop cite:10.1145/3314221.3314625. A /type/ is a triple of three
-    values: \textsc{Null}, \textsc{First} and \textsc{Flast}. Two important
-    types are \( \bot= \{ \mathsc{Null} = \mathbf{false}, \mathsc{First} =
-    \emptyset, \mathsc{Flast} = \emptyset \} \) and \( \epsilon = \{
-    \mathsc{Null} = \mathbf{true}, \mathsc{First} = \emptyset, \mathsc{Flast} =
-    \emptyset \} \).
+*** Parsing Techniques
+    A /parser/ is a type of recogniser, which also extracts structure from the
+    input string. This structure is usually dubbed the /concrete parse tree/.
+    Given a \(\mu\)-regular expression, a parser for its language could give a
+    tree following the structure of the expression. *EXAMPLE?* 
+
+**** Backus-Naur Form
+     Variations of the Backus-Naur form (BNF) are the standard way to describe
+     context-free languages. It describes a context-free language from its
+     production rules.
+
+     *TODO: insert bnf example*
+     
+     Figure ref:null shows an example of BNF code. Strings of characters, such
+     as ~"+"~, represent literal input strings. These are called terminal
+     symbols.
+
+     Names surrounded by angle brackets, such as ~<term>~, are called
+     non-terminal symbols. They represent places where a production rule will be
+     substituted, instead of any literal input. Every non-terminal is assigned a
+     set of production rules, separated by ~|~ characters.
+
+     Other syntax is much like regular expressions. There are various standard
+     and non-standard extensions to this core syntax.
+
+     One criticism of BNF is that the production rules are part of a single,
+     mutually-recursive namespace. In our example, ~<expr>~ refers to ~<term>~
+     which refers to ~<expr>~. This single-namespace creates hidden dependencies
+     between different production rules, which can lead to surprising behaviour
+     when one is modified.
+
+     Someone *NOTE: find out who* cite:null showed that production rules used by
+     BNF and \(\mu\)-regular expressions are equivalent.
+     
+**** Parser Combinators
+     Consider concatenation and alternation. They each combine a number of
+     smaller expressions into one bigger expression. A parser for them would
+     combine a number of smaller parsers into one bigger parser. A construct
+     that combines or extends the behaviour of smaller parsers is called a
+     /parser combinator/.
+
+     Let's think about fixed-point expressions. They don't take a parser as an
+     argument. Instead, the argument is itself a parser combinator. This makes
+     the fixed-point operator a /higher-order parser combinator/, mapping a
+     parser combinator into a parser. Much like there is a hierarchy of function
+     orders, we find there is a similar hierarchy for parser combinators.
+
+     In general, parser combinators require some form of backtracking. Take for
+     example the regular expression \(apple|aardvark\). When we see an ~a~, we
+     don't know whether this the start of ~apple~ or ~aardvark~. This
+     non-determinism is why backtracking is essential.
+     
+**** Recursive Descent
+     Recursive descent parsers are the "natural" solution to parsing. cite:null
+     If you ask a student with no knowledge about parsers to construct a parser,
+     chances are they will build a recursive descent parser.
+
+     Recursive descent parsing is a top-down technique. You start with the
+     highest structural elements and work down to the small details. Parser
+     combinators are a form of recursive descent parser.
+
+     An interesting sub-class of recursive-descent languages are the
+     \(LL(\kappa)\) languages. These are languages that can be parsed by
+     recursive descent without backtracking cite:null. This is the class of
+     languages that are well-typed under the KY type system.
+
+**** Recursive Ascent
+     Whilst recursive descent work from the top down, recursive ascent parsers
+     work from the bottom upwards cite:null. Starting from the smallest details,
+     you build your way up to a final complete structure.
+
+     Recursive ascent parsers are typically implemented as push-down automata
+     cite:null. They keep a stack of parse results and use a large state table
+     to determine what action to perform.
+
+     One of the most widely-used recursive-ascent language classes is the
+     \(LR(\kappa)\) class of languages. This is what is used by most of the
+     popular parser generators cite:null. This is because \(LR(\kappa)\)
+     languages are non-backtracking.
+
+*** KY Type System
+    Under the KY type system, the /denotation/ of an expression is the language
+    it represents . This is shown in figure ref:null.
+
+    *TODO: Add denotation figure*
+    
+    A /type/ in the KY type system is a triple of three values: \textsc{Null},
+    \textsc{First} and \textsc{Flast}. Two important types are \( \bot= \{
+    \textsc{Null} = \mathbf{false}, \textsc{First} = \emptyset, \textsc{Flast} =
+    \emptyset \} \) and \( \epsilon = \{ \textsc{Null} = \mathbf{true},
+    \textsc{First} = \emptyset, \textsc{Flast} = \emptyset \} \).
     
     A language /satisfies/ a type if the type over-approximates the language
     properties. For example, \( \emptyset \) satisfies all types, because it has
@@ -83,13 +227,14 @@
     Next, we describe guarded and unguarded variables. In most programming
     languages, Once a variable is defined, it can be used anywhere. This is not
     the case in this type system. When a fixed point introduces a variable, it
-    cannot be used immediately -- it is /guarded/. The variable can only be used
+    cannot be used immediately; it is /guarded/. The variable can only be used
     when it becomes /unguarded/, which happens on the right side of
     concatenations.
 
-    In the expression \( \mu\alpha.\alpha x \), \( α \) is guarded, so cannot be
-    referenced. However, in the expression \( \mu\alpha.\epsilon|a\alpha \), it
-    appears on the right of a concatenation, so it is unguarded.
+    In the expression \( \mu\alpha.\alpha x \), \( \alpha \) is guarded, so
+    cannot be referenced. However, in the expression \(
+    \mu\alpha.\epsilon|a\alpha \), it appears on the right of a concatenation,
+    so it is unguarded.
 
     A /variable context/ is a pair of maps from variables to types. The two maps
     correspond to guarded and unguarded variables. Because of this, a variable
@@ -99,15 +244,112 @@
     types. \( \Gamma, \Delta \vdash e : \tau \) can be read: expression \( e \)
     has type \( \tau \) in context \( \Gamma, \Delta \). Krishnaswami and Yallop
     cite:10.1145/3314221.3314625 found that if an expression and type are
-    related by the typing judgement in figure [], then the language of the
-    expression satisfies the type.
+    related by the KY typing judgement in figure cite:null, then the language of
+    the expression satisfies the type.
     
-    TODO: insert type rules figure
+    *TODO: insert type rules figure*
     
+    Krishnaswami and Yallop cite:10.1145/3314221.3314625 found there are three
+    sources of back-tracking for parser combinators: sequential non-determinism,
+    disjunctive non-determinism and non-left-factoring.
+
+    Consider the regular expression \(a*a*\). Given a string such as ~aaaa~,
+    there are five ways to parse it. This ambiguity is /sequential
+    non-determinism/. In general, it occurs when there are multiple ways to
+    split a string to parse a concatenation.
+
+    Now look at \((aa* | a*a)\). Given the string ~aaaa~, each alternative can
+    parse it in only one way. However, both alternatives can parse the string.
+    /disjunctive non-determinism/ is when multiple alternatives can parse the
+    same string.
+
+    Finally, think about the earlier \(apple|aardvark\) example. This is not
+    disjunctive non-determinism because the two alternatives have disjoint
+    languages. However, assume a parser can only see one character from the
+    input string at a time. If we can only see the ~a~ symbol, it is impossible
+    to know which alternative to take. This expression is not /left-factored/
+    --- the two alternatives share a prefix.
 ** Requirements Analysis
+   My core deliverable focused on implementing the KY type system. Having a well
+   typed language description is nearly useless without a way to parse the
+   language. Hence another core component was /output of a chewed parser/. These
+   two components could then be used to create a parser from any Nibble
+   description.
+
+   Whilst sufficient to describe any context-free language, \(\mu\)-regular
+   expressions are awfully verbose. One stretch requirement was to introduce
+   /lambda expressions and named functions/. This would allow users of Nibble to
+   extract common patterns, greatly reducing the amount of Nibble they would
+   need to write.
+
+   There are many other ways Nibble could be extended. *TODO: list them*
 ** Starting Point
+   I closely studied the KY type system before beginning the project. I did not
+   begin any work on possible extensions to it.
+
+   The project builds on ideas about formal languages. These have been studied
+   in the /Part IA Discrete Maths/ and /Part IB Compiler Construction/ courses.
+   I also did a small personal project on them during the summer of 2018.
+
+   Additionally, the project uses concepts from type systems, covered in the
+   /Part IB Semantics of Programming Languages/, /Part II Types/ and /Part II
+   Denotational Semantics/ courses.
 ** Software Engineering
+*** Project Management
+    After successful development of an initial core, extensions to a programming
+    language naturally tend themselves to an iterative approach. Whilst you are
+    mindful of future extensions, you work towards successful implementation of
+    one at a time.
+
+    This lends itself to the spiral development model. Each component follows a
+    waterfall development cycle --- design, implementation, integration and
+    testing --- and no two components are developed concurrently.
+
+    *NOTE: the rest of this section could be cut*
+
+    This model has several other benefits. At the end of each cycle, there is a
+    functional deliverable. This means that even when there are unexpected
+    delays in implementing a component, there is still a functional product to
+    fall back on.
+
+    Additionally, there is a lot of flexibility in what components are
+    implemented and in what order. As you work on a product, you come to better
+    understand what features can be added and the cost of doing so. *TODO: More
+    words here*
+*** Version Control
+    I used git as a version-control and revision history system. New features
+    were developed on individual branches. Upon completion, they were merged
+    with the main branch.
+
+    The git repository was mirrored on both a privately-owned server and GitHub.
+    Regular commits and pushes ensured that very little data was lost if there
+    was an issue with my device.
+
+    The project is dual-licensed under the MIT and Apache 2.0 licenses, as is
+    common for projects written in Rust. These are permissive licenses that
+    encourage development whilst limiting personal liability.
+*** Development Tools
+    The standard Rust build system is called Cargo. It allows an easy way to run
+    several kinds of checks against the whole code base. In particular  clippy 
+    is a static analysis tool that some style improvements and common bugs.
+    Also,  rustfmt  was regularly used to consistently format code.
+    
+    Tests were performed using Rust's built-in test harness. This allows the
+    user to write unit tests anywhere. It also provides a method of performing
+    integration tests.
+
+    Benchmarks were written using  criterion . This micro-benchmarking library
+    measures the performance of a function by measuring thousands of iterations.
+    It also provides some simple statistical analysis and comparisons between
+    functions.
+
+**** NOTE: Comments on tests
+     I don't have enough/any unit tests. All my tests come from some simple
+     integration tests. I am relying on AutoChomp being so complex and fragile
+     that any errors in the type system would break it entirely.
 * Implementation
+** \(\lambda\mu\)-Regular Expressions
+    *EXT: describe \(\lambda\mu\)-regular expressions*
 * Evaluation
 * Conclusion
 * References
