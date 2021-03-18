@@ -2,26 +2,35 @@
 #+latex_class_options: [12pt,a4paper,twoside,openright]
 #+latex_header: \usepackage[hyperref=true,url=true,backend=biber,natbib=true]{biblatex}
 #+latex_header: \usepackage[margin=1in]{geometry}
-#+latex_header: \usepackage{parskip}
+#+latex_header: \usepackage{booktabs,parskip,stmaryrd}
 #+latex_header: \addbibresource{diss.bib}
 #+options: H:6
 
 \pagestyle{headings}
 * Introduction
-  A parser is a function that transforms a linear stream of data into a
-  tree-like structure. They are used by nearly all interpreters and compilers to
-  convert the linear text presented by the file system into an expression tree
-  to analyse and evaluate.
-  
+  A language is a set of strings over an alphabet. They can be described by a
+  set of production rules, which describe how to transform semantic ideas into
+  syntactic strings. The exact rules used to create a string is called its
+  derivation.
+
+  There are different classes of language based on the complexity of their
+  rules. The two most-studied are regular languages and context-free languages.
+  Regular languages are the simplest class of practical languages. Context-free
+  languages are a larger superset.
+
+  A parser is a function that transforms a string into its derivation. Parsers
+  are used by nearly all interpreters and compilers to convert the linear text
+  presented by the file system into the abstract structure of the source code.
+
   Generating parsers for programming languages has been done in practice for
   over 60 years cite:null. Writing the hundreds of lines of necessary to
   describe how to parse some input requires a huge amount of repetition and
   boiler-plate code. Parser generators can express the same logic in only a few
-  tens of lines of code.
+  tens of production rules, which they expand into full parser source code.
 
-  Modern parser generators transform descriptions of context-free grammars into
-  automata. This allows for linear time parsers cite:null and high-quality error
-  reporting cite:null.
+  Modern parser generators transform production rules of context-free grammars into
+  deterministic push-down automata. This allows creation of parsers that run in
+  linear time cite:null, with high-quality error reporting cite:null.
 
   With the increasing popularity of more powerful type systems, another approach
   to parsing is becoming increasingly common. Parser combinators are
@@ -30,39 +39,33 @@
   combinators rely on some form of backtracking before they can reject an input
   string.
 
-  \(\mu\)-regular expressions cite:10.1007/BFb0023771 are a small extension to
-  regular expressions. \(\mu\)-regular expressions offer several advantages over
-  the current standard, Backus-Naur form, for describing parsers. The key
-  difference is that \(\mu\)-regular expressions are lexically scoped, which
-  makes them prime targets for embedding within programming languages.
+  Regular expressions are a concise way to describe regular languages cite:null,
+  equivalent to using production rules. \(\mu\)-regular expressions
+  cite:10.1007/BFb0023771 are a small extension of regular expressions. They are
+  a concise way to describe context-free languages, also equivalent to using
+  production rules cite:null.
 
   Krishnaswami and Yallop cite:10.1145/3314221.3314625 designed a type system
   (henceforth known as the /KY type system/) for \(\mu\)-regular expressions
-  that only accepts languages that can be parsed using recursive descent in
-  linear time. They also implemented a parser generator using this type system
-  in OCaml, providing evidence it's performance is comparable to other parser
-  generators.
+  that only accepts languages that can be parsed in linear time. They also
+  implemented a parser generator using this type system in OCaml, and provided
+  evidence its performance is comparable to other parser generators.
   
 ** Project Overview
-   My project is largely a reproduction of Krishnaswami and Yallop
-   cite:10.1145/3314221.3314625.
-
-   *NOTE: let's make "macros" more formal by defining them as functions, where
-   the typing rule /is/ syntactic substitution.*
-   
    I start in section ref:null by defining an extension of \(\mu\)-regular
-   expressions adding functions. We extend results from Krishnaswami and Yallop
-   cite:10.1145/3314221.3314625 to these /\(\lambda\mu\)-regular expressions/.
-   The extended type system will be called the /LM type system/.
+   expressions adding functions. We extend type safety and semantics results
+   from Krishnaswami and Yallop cite:10.1145/3314221.3314625 to these
+   /\(\lambda\mu\)-regular expressions/. The extended type system will be called
+   the /LM type system/.
 
    Next, I design /Nibble/ in section ref:null. Nibble is a new DSL for
    context-free languages. The syntax is based on \(\lambda\mu\)-regular
    expressions.
-
+   
    In section ref:null, I implement /Chomp/, a typed parser generator for
-   Nibble. Chomp uses the LM type system to ensure it's input is suitable for
+   Nibble. Chomp uses the LM type system to ensure its input is suitable for
    transformation into a recursive-descent parser. Chomp is implemented in Rust,
-   and produces Rust source code as output --- a /chewed parser/.
+   and produces Rust source code as output. This output is a /chewed parser/.
    
    I end by evaluating the performance of chewed parsers. Critically in section
    ref:null we show that chewed parsers operate in linear time. Section ref:null
@@ -71,11 +74,157 @@
    potentially usable in practice.
 * Preparation
 ** Background
-   We start by recapping some knowledge of formal languages. We then discuss
-   some useful language properties. Next, we discuss some approaches to writing
-   parsers, both by hand and by generation. Finally, we discuss the KY type
-   system and show how it avoids some performance problems.
+   *TODO: some preamble*
    
+*** Formal Languages
+    Given an alphabet \( \Sigma \), a language \( L \) is a set
+    \( L \subseteq \Sigma^* \). There are three properties of particular
+    interest to us: Null, First and Flast.
+
+    A language \( L \) is Null if it contains the empty string. The First set of
+    \( L \) is the set of characters that can start a string in \( L \). Given a
+    string \( u \in L \), a character \( x \) is in the Flast set of \( L \) if
+    there is some string \( v \) such that \( uxv \in L \). Formal definitions
+    are given in figure [[fig:lang-prop-def]].
+
+    #+label: fig:lang-prop-def
+    #+caption: Definitions of the Null, First and Flast properties of language \(L\).
+    #+begin_figure
+    \begin{align*}
+      \mathrm{Null}(L) &\iff \epsilon \in L \\
+      \mathrm{First}(L) &= \{ x \in \Sigma
+                           \mid \exists w \in \Sigma^*. xw \in L
+                           \} \\
+      \mathrm{Flast}(L) &= \{ x \in \Sigma
+                           \mid \exists w \in \Sigma^* / \epsilon,
+                                \exists w' \in Sigma^*. w \in L \wedge
+                                                        wxw' \in L
+                           \}
+    \end{align*}
+    #+end_figure
+
+**** Chomsky Hierarchy
+     *TODO: needs citations*
+     
+     Introduce a set \( N \) of non-terminal symbols. Distinguish one symbol
+     \( S \in N \) as the start symbol. A production rule \( u \to v \) is a
+     rewriting rule, where \( u \in (\Sigma \uplus N)^* N (\Sigma \uplus N)^*\)
+     and \( v \in (\Sigma / S \uplus N)^* \).
+
+     A set of production rules forms a grammar, \( G \).
+
+     From the start symbol, the string is successively rewritten using the
+     grammar. For a rule \( u \to v \), a string \( wuw' \) can be rewritten as
+     \( wvw' \). This repeats until there are no more non-terminal symbols in
+     the string. The final string is in the language generated by the grammar,
+     \( L(G) \) and the sequence of rule applications is the derivation.
+
+     Chomsky cite:null found restricting the form of strings \( u \) and \( v \)
+     in production rules results in different language classes. These language
+     classes are shown in table [[tab:chomsky]].
+
+     #+label: tab:chomsky
+     #+caption: Chomsky Hierarchy of grammars
+     #+attr_latex: :float t :booktabs :align lccl
+     | Grammar | \(u \in\)                                     | \(v \in\)                   | Languages              |
+     |---------+-----------------------------------------------+-----------------------------+------------------------|
+     | Type-0  | \((\Sigma \uplus N)^* N (\Sigma \uplus N)^*\) | \((\Sigma / S \uplus N)^*\) | Recursively enumerable |
+     | Type-1  | \((\Sigma \uplus N)^* N (\Sigma \uplus N)^*\) | \((\Sigma / S \uplus N)^+\) | Context-sensitive      |
+     | Type-2  | \(N\)                                         | \((\Sigma / S \uplus N)^*\) | Context-free           |
+     | Type-3  | \(N\)                                         | \(N \cup N(\Sigma / S)\)    | Regular                |
+
+**** \(\mu\)-Regular Expressions
+     Figure [[fig:regex]] gives the syntax and denotation of regular
+     expressions. Their denotation is how they are interpreted as a language.
+     *Someone* cite:null proved there is an equivalence between Type-0 grammars
+     and regular expressions.
+
+     #+label: fig:regex
+     #+caption: Syntax and denotation of regular expressions
+     #+begin_figure
+       \[
+         e ::= \bot \mid \epsilon \mid c \mid e + e \mid e \cdot e \mid e^*
+       \]
+       \begin{align*}
+         &\llbracket \bot \rrbracket &&= \emptyset \\
+         &\llbracket \epsilon \rrbracket &&= \{ \epsilon \} \\
+         &\llbracket c \rrbracket &&= \{ c \} \\
+         &\llbracket e + e' \rrbracket &&=
+           \llbracket e \rrbracket \cup \llbracket e' \rrbracket \\
+         &\llbracket e \cdot e' \rrbracket &&=
+           concat(\llbracket e \rrbracket, \llbracket e' \rrbracket) \\
+         &\llbracket e^* \rrbracket &&=
+           star(\llbracket e \rrbracket)
+       \end{align*}
+       \begin{align*}
+         star(X) &= \bigcup_{i \in \mathbb{N}} L_i \text{ where }
+           \begin{array}{ll}
+             L_0 & = \{ \epsilon \} \\
+             L_{n+1} & = concat(X, L_n)
+           \end{array} \\
+         concat(X, Y) &= \{ ww' \in \Sigma^* \mid \exists w \in X, w' \in Y \}
+       \end{align*}
+     #+end_figure
+
+     \(\mu\)-regular expressions make two modifications. The first is the
+     introduction of variables. The second is a generalisation of the Kleene
+     star \( e^* \) to fixed point expressions \( \mu x. e \). Because of
+     the addition of variables, the denotation is now a function from a variable
+     map to languages. The new syntax and denotation is in figure [[fig:mu-regex]].
+
+     #+label: fig:mu-regex
+     #+caption: Syntax and denotation of \(\mu\)-regular expressions
+     #+begin_figure
+       \[
+         g ::= \bot \mid \epsilon \mid c \mid x \mid g + g \mid g \cdot g \mid \mu x. g
+       \]
+       \begin{align*}
+         &\llbracket \bot \rrbracket \gamma &&= \emptyset \\
+         &\llbracket \epsilon \rrbracket \gamma &&= \{ \epsilon \} \\
+         &\llbracket c \rrbracket \gamma &&= \{ c \} \\
+         &\llbracket x \rrbracket \gamma &&= \gamma(x) \\
+         &\llbracket g + g' \rrbracket \gamma &&=
+           \llbracket g \rrbracket \gamma \cup
+           \llbracket g' \rrbracket \gamma \\
+         &\llbracket g \cdot g' \rrbracket \gamma &&=
+           \{ ww' \in \Sigma^*
+           \mid \exists w \in \llbracket g \rrbracket \gamma,
+                        w' \in \llbracket g' \rrbracket \gamma
+           \} \\
+         &\llbracket \mu x. g \rrbracket \gamma &&=
+           fix(\lambda X. \llbracket g \rrbracket (\gamma, X/x))
+       \end{align*}
+       \[
+         fix(f) = \bigcup_{n \in \mathbb{N}} f^n (\bot)
+       \]
+     #+end_figure
+     
+     Leiß cite:null proved that \( e^* = \mu x. \epsilon + e \cdot x \), hence
+     \(\mu\)-regular expressions can represent all regular languages. *Someone*
+     cite:null further showed that \(\mu\)-regular expressions are equivalent to
+     Type-1 grammars.
+
+*** KY Type System
+    * key language properties
+    * type definition
+    * type satisfiability
+    * variable context
+    * type judgement
+   
+*** Parser Generators
+
+**** State Machines
+    
+     * machines for each hierarchy
+
+**** \(LR(\kappa)\)
+     * problem with cfl
+     # * LR(κ) solution
+
+**** Parser Combinators
+     * describe combinators
+     * describe problems
+
 *** Formal Languages
     *NOTE: This could possibly benefit from a couple of figures.*
     
@@ -352,5 +501,28 @@
     *EXT: describe \(\lambda\mu\)-regular expressions*
 * Evaluation
 * Conclusion
+* Glossary
+  # - chewed parser: output parser from Chomp
+  # - Chomp: a parser generator for Nibble using the LM type system
+  # - derivation: set of production rules to produce a string
+  # - First: \( First(L) = \{ x \mid \exists w \in \Sigma^*. xw \in L \} \)
+  # - Flast:
+  #   \( First(L) = \{ x \mid \exists w \in \Sigma^*/\emptyset, w\' \in \Sigma^*. w \in L \wedge wxw' \in L \} \)
+  # - grammar: set of production rules
+  # - KY type system: type system for \(\mu\)-regular expressions
+  # - language: set of strings over an alphabet
+  # - LM type system: type system for \(\lambda\mu\)-regular expressions
+  # - Nibble: DSL for \(\lambda\mu\)-regular expressions
+  # - non-terminal: another set of symbols
+  # - Null: \( Null(L) \iff \emptyset \in L \)
+  # - parser: function from string to derivation
+  # - parser combinator: higher-order function from parser to parser
+  # - parser generator: program from production rules to parser source code
+  # - production rule: transform semantic idea into syntactic string
+  # - regular expression: concise description of regular language
+  # - start symbol: distinguished non-terminal
+  # - \(\lambda\mu\)-regular expression: extension of \(\mu\)-regular expression
+  #   with functions
+  # - \(\mu\)-regular expression: concise description of context-free language
 * References
   \printbibliography[heading=none]{}
