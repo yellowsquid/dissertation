@@ -1,0 +1,7 @@
+*.bbl
+*.dvi
+*.html
+*.pdf
+*.tex
+auto/
+*~
