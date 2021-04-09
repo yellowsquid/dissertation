@@ -2,65 +2,89 @@
 #+latex_class_options: [12pt,a4paper,twoside,openright]
 #+latex_header: \usepackage[hyperref=true,url=true,backend=biber,natbib=true]{biblatex}
 #+latex_header: \usepackage[margin=1in]{geometry}
-#+latex_header: \usepackage{booktabs,parskip,stmaryrd}
+#+latex_header: \usepackage{booktabs,ebproof,parskip,stmaryrd}
 #+latex_header: \addbibresource{diss.bib}
+
+# math operators
+#+latex_header: \DeclareMathOperator{\True}{true}
+#+latex_header: \DeclareMathOperator{\False}{false}
+#+latex_header: \DeclareMathOperator{\If}{if}
+#+latex_header: \DeclareMathOperator{\Then}{then}
+#+latex_header: \DeclareMathOperator{\Else}{else}
+#+latex_header: \DeclareMathOperator{\Let}{let}
+#+latex_header: \DeclareMathOperator{\In}{in}
+#+latex_header: \DeclareMathOperator{\Null}{null}
+#+latex_header: \DeclareMathOperator{\First}{first}
+#+latex_header: \DeclareMathOperator{\Flast}{flast}
+
+# try to avoid widows and orphans
+#+latex_header: \raggedbottom
+#+latex_header: \sloppy
+#+latex_header: \clubpenalty1000%
+#+latex_header: \widowpenalty1000%
+
+# add more header depths
 #+options: H:6
+
+list-of-figures:nil
 
 \pagestyle{headings}
 * Introduction
-  A language is a set of strings over an alphabet. They can be described by a
-  set of production rules, which describe how to transform semantic ideas into
-  syntactic strings. The exact rules used to create a string is called its
-  derivation.
+  A /language/ is a set of strings over some alphabet of symbols. For example, a
+  dictionary enumerates a language over written characters. Spoken English is a
+  language, where the alphabet consists of phonemes. Programming languages are
+  over an alphabet of ASCII or Unicode characters. IP packets are languages over
+  bytes. The language of a decision problem is the set of valid inputs. Every
+  computer science problem can be transformed into a question about languages.
 
-  There are different classes of language based on the complexity of their
-  rules. The two most-studied are regular languages and context-free languages.
-  Regular languages are the simplest class of practical languages. Context-free
-  languages are a larger superset.
+  Whilst linear strings are helpful for data storage and transmission, they have
+  limited use for other algorithms. Strings are used to encode other non-linear
+  data. A /parser/ is a function that takes a language string and decodes it to
+  return the underlying data. Parsers should be fast; why spend time decoding
+  data when there is useful computation to be done? Unfortunately, hand writing
+  efficient parsers is repetitive, with lots of boiler plate, and requires
+  careful consideration of the order of operations.
 
-  A parser is a function that transforms a string into its derivation. Parsers
-  are used by nearly all interpreters and compilers to convert the linear text
-  presented by the file system into the abstract structure of the source code.
+  A /parser generator/ is a curried function taking a description of a language
+  and returning a parser. If the target language is known ahead of time, then
+  the parser can be computed ahead of time. Automated parser generation raises
+  the level of abstraction for writing parsers, allowing people to quickly
+  design a language so they can focus on solving difficult problems elsewhere.
 
-  Generating parsers for programming languages has been done in practice for
-  over 60 years cite:null. Writing the hundreds of lines of necessary to
-  describe how to parse some input requires a huge amount of repetition and
-  boiler-plate code. Parser generators can express the same logic in only a few
-  tens of production rules, which they expand into full parser source code.
+  The de facto way to describe a language is with a /formal grammar/. Introduced
+  by Chomsky cite:null, a grammar is a finite set of string rewriting rules.
+  These rules are often given to the parser generator in Backus-Naur form (BNF).
+  This form of parser generation has a couple of problems in practice. Firstly,
+  BNF uses a single global mutually-recursive namespace. This is incompatible
+  with modern programming languages that almost exclusively use lexical scoping.
+  Secondly, there is no standard BNF format. Therefore a grammar cannot be
+  easily shared between different projects. Finally, introducing an additional
+  compilation step for parser generation is often difficult, sometimes needing
+  to completely overhaul the build system being used.
 
-  Modern parser generators transform production rules of context-free grammars into
-  deterministic push-down automata. This allows creation of parsers that run in
-  linear time cite:null, with high-quality error reporting cite:null.
+  These issues, combined with a trend towards more powerful type systems, have
+  led to an increase in use of /parser combinators/. Parser combinators are
+  higher-order functions that take parsers and return a new parser. By using
+  regular functions instead of parser generators, problems with variable scoping
+  and compilation are completely bypassed.
 
-  With the increasing popularity of more powerful type systems, another approach
-  to parsing is becoming increasingly common. Parser combinators are
-  higher-order functions that take a number of parsing functions and combine
-  them into a new, more complex parsing function. Unfortunately, most parser
-  combinators rely on some form of backtracking before they can reject an input
-  string.
-
-  Regular expressions are a concise way to describe regular languages cite:null,
-  equivalent to using production rules. \(\mu\)-regular expressions
-  cite:10.1007/BFb0023771 are a small extension of regular expressions. They are
-  a concise way to describe context-free languages, also equivalent to using
-  production rules cite:null.
-
-  Krishnaswami and Yallop cite:10.1145/3314221.3314625 designed a type system
-  (henceforth known as the /KY type system/) for \(\mu\)-regular expressions
-  that only accepts languages that can be parsed in linear time. They also
-  implemented a parser generator using this type system in OCaml, and provided
-  evidence its performance is comparable to other parser generators.
+  Unfortunately, the ease of use of parser combinators comes with a price. Most
+  implementations of parser combinators use backtracking, which can lead to
+  exponential worst-case parse time. Fortunately, a recent result by
+  Krishnaswami and Yallop cite:null found a type system (the /KY type system/)
+  for some primitive parser combinators that only accepts linear-time
+  deterministic parsers.
   
 ** Project Overview
-   I start in section ref:null by defining an extension of \(\mu\)-regular
-   expressions adding functions. We extend type safety and semantics results
-   from Krishnaswami and Yallop cite:10.1145/3314221.3314625 to these
-   /\(\lambda\mu\)-regular expressions/. The extended type system will be called
-   the /LM type system/.
+   Some parser combinators can be defined by composing smaller combinators
+   together. The KY type system handles this by evaluating the higher-order
+   combinators until they reach the base combinators. In section [[*The LM Type
+   System]] I form the /LM type system/ by extending the KY type system to handle
+   higher-order combinators directly.
 
    Next, I design /Nibble/ in section ref:null. Nibble is a new DSL for
-   context-free languages. The syntax is based on \(\lambda\mu\)-regular
-   expressions.
+   describing languages, inspired by combinators used in the LM type system.
+   Nibble should be able to represent the same languages as BNF.
    
    In section ref:null, I implement /Chomp/, a typed parser generator for
    Nibble. Chomp uses the LM type system to ensure its input is suitable for
@@ -74,362 +98,474 @@
    potentially usable in practice.
 * Preparation
 ** Background
-   *TODO: some preamble*
+   This subsection starts with the definition of formal languages, generators
+   and parsers. Understanding these definitions is essential for understanding
+   the rest of this dissertation. Next, it discusses formal grammars. Formal
+   grammars are the traditional way to study context-free languages *(why have
+   them?)*. Following this, it describes parser combinators and an algebraic
+   interpretation of them. This algebraic interpretation is the core of the KY
+   type system and the extended LM type system. This subsection then goes on to
+   describe the KY type system. Finally, we discuss a general Hindley-Milner
+   type system, which heavily inspired the final form of the LM type system.
    
 *** Formal Languages
-    Given an alphabet \( \Sigma \), a language \( L \) is a set
-    \( L \subseteq \Sigma^* \). There are three properties of particular
-    interest to us: Null, First and Flast.
+    Given an alphabet, \( \Sigma \), a /language/
+    \( L \subseteq \mathcal{P}(\Sigma^*) \) is a set of strings over this
+    alphabet.
 
-    A language \( L \) is Null if it contains the empty string. The First set of
-    \( L \) is the set of characters that can start a string in \( L \). Given a
-    string \( u \in L \), a character \( x \) is in the Flast set of \( L \) if
-    there is some string \( v \) such that \( uxv \in L \). Formal definitions
-    are given in figure [[fig:lang-prop-def]].
+    Take a set \( D \) of /derivations/. A function \( g : D \to \Sigma^* \) is
+    a /language generator/, with generated language
+    \( L[g] = \{ w \in \Sigma^* \mid \exists d \in D. g(d) = w \} \).
 
-    #+label: fig:lang-prop-def
-    #+caption: Definitions of the Null, First and Flast properties of language \(L\).
+    If \( g \) is an injection, then the generator is /unambiguous/. Every
+    string in \( L[g] \) will have a unique derivation.
+
+    Take a reversed function \( p : L[g] \to D \). \( p \) is a /parser/ of
+    \( g \) if \( p \) is a right inverse of \( g \). In general, many such
+    parsers could exist. Figure [[fig:ambiguous-parser]] shows a trivial example.
+    The set of parsers for a generator is denoted \( P[g] \). When \( g \) is
+    unambiguous, then \( g \) is both injective and surjective over \( L[g] \),
+    hence \( p \) is unique.
+
+    # Define a /prefix parser/ of \( g \),
+    # \( p' : \Sigma^* \rightharpoonup D \times \Sigma^* \), to be a partial
+    # function such that when \( p'(w) = d, w' \), then \( g(d) w' = w \), and
+    # \( g(d) \) is the longest prefix of \( w \) in \( L[g] \).
+
+    #+label: fig:ambiguous-parser
+    #+name: fig:ambiguous-parser
+    #+caption: A generated language with two parsers.
+    #+begin_figure
+    \[ D = \{ 0 , 1 \} \]
+    \[ g(d) = a \]
+    \begin{align*}
+      p_1(a) &= 0 \\
+      p_2(a) &= 1
+    \end{align*}
+    \[ g(p_1(a)) = a = g(p_2(a)) \]
+    #+end_figure
+
+    For a set of /language descriptions/, \( \mathcal{D} \), define an indexed
+    set of generators, \( \mathcal{G} \). A /parser generator/ is a function
+    \( \mathcal{P} \) such that
+    \( \mathcal{P}(d) \in P[\mathcal{G}_d] \). For any valid language
+    description, a parser generator then produces a parser for that language.
+*** Formal Grammars
+    Formal grammars are a set of language descriptions. Introduce a set of
+    /non-terminal symbols/ \( N \). Distinguish a /start symbol/ \( S \in N \).
+    Let \( V = \Sigma \uplus N \) be the /vocabulary/ of a grammar.
+
+    A /production rule/ is a pair, \( u \mapsto v \), where \( u \in V^*NV^* \)
+    and \( v \in (V/S)^* \). The relation \( wuw' \Mapsto wvw' \) is an
+    /application/ of this production rule.
+
+    A grammar \( G \) is a set of production rules. A sequence of applications
+    \( S \Mapsto^* w \) is a derivation if \( w \in \Sigma^* \). The generator
+    for \( G \) returns these \( w \). An example derivation is given in figure
+    [[fig:grammar-example]].
+
+    #+label: fig:grammar-example
+    #+name: fig:grammar-example
+    #+caption: An example grammar derivation.
     #+begin_figure
     \begin{align*}
-      \mathrm{Null}(L) &\iff \epsilon \in L \\
-      \mathrm{First}(L) &= \{ x \in \Sigma
-                           \mid \exists w \in \Sigma^*. xw \in L
-                           \} \\
-      \mathrm{Flast}(L) &= \{ x \in \Sigma
-                           \mid \exists w \in \Sigma^* / \epsilon,
-                                \exists w' \in Sigma^*. w \in L \wedge
-                                                        wxw' \in L
-                           \}
+      S &\mapsto aX \\
+      X &\mapsto aX\\
+      aX &\mapsto Xb \\
+      X &\mapsto c
+    \end{align*}
+    \[ S \Mapsto aX \Mapsto aaX \Mapsto aXb \Mapsto acb \]
+    #+end_figure
+
+    These /unrestricted grammars/ correspond to recursively enumerable languages
+    cite:null. Whilst any string in the language is accepted, rejecting strings
+    is undecidable. Chomsky cite:null introduced a hierarchy of constrained
+    grammars. Adding more constraints to production rules reduces the
+    computational complexity of parsers, at the cost of reduced expressive
+    power.
+
+    Context-free grammars have rules of the form \( A \mapsto v \), where
+    \( A \in N \). This transforms derivations into trees, with non-terminal
+    internal nodes and alphabet strings as leaves.
+
+    /Context-free grammars/ are the smallest class of grammars in the Chomsky
+    hierarchy that include paired delimiters. The set of languages they
+    represent are called /context-free languages/. Unfortunately, algorithms
+    that parse general context-free grammars, such as Earley and CYK, have
+    super-linear time complexity. *NOTE: why is this bad?*
+
+    Chomsky cite:null found that context-free grammars can be parsed by
+    nondeterministic push-down automata -- finite state machines with a stack.
+    Restricting this to deterministic finite automata leads to /deterministic
+    context-free grammars/. Their languages can be parsed in linear time, and
+    are unambiguous.
+
+    There are generally two approaches to parsing deterministic context-free
+    grammars: top-down and bottom-up. Both of these methods are typically
+    restricted to one symbol of /lookahead/. This means only one symbol of the
+    input is visible at a time, and once the input is advanced it cannot be
+    reversed.
+
+    Top-down parsers, or left-most derivation parsers, start at the root of the
+    derivation tree and recursively parse each non-terminal. Parsers like this
+    one exclude grammars with /left-recursion/; rules of the form
+    \( A \mapsto Av \). With only one symbol of lookahead, it is impossible to
+    determine how deep the derivation needs to be.
+
+    Bottom-up parsers (right-most derivation parsers) start at the leaves of the
+    derivation tree. This eliminates the left-recursion problem, as the tree is
+    only built up to the minimum necessary height.
+*** Parser Combinators
+    A /generator combinator/ is a higher-order language generator. They take
+    some number of generators and generator combinators, and produce a new
+    generator or generator combinator. A /parser combinator/ is likewise a
+    higher-order parser.
+    
+    Mathematical analysis of arbitrary generator combinators is infeasible --
+    they are arbitrary functions, after all. By restricting the combinators used
+    to the set composing some primitive combinators, it is possible to introduce
+    an algebra to describe them. Figure [[fig:mu-reg-def]] details one such algebra,
+    named \(\mu\)-regular expressions.
+    
+    #+label: fig:mu-reg-def
+    #+name: fig:mu-reg-def
+    #+caption: \(\mu\)-regular expressions and their derivations.
+    #+begin_figure
+      *TODO: alignment of derivations is a little wonky*
+      \[
+        e = \bot
+          \mid \epsilon
+          \mid c
+          \mid e \cdot e
+          \mid e \vee e
+          \mid \mu x. e
+          \mid x
+      \]
+      
+      \centering
+      \bigskip
+      \begin{math}
+      \begin{array}{ccc}
+        \begin{prooftree}
+           \infer0[DEps]{\epsilon &\Mapsto \epsilon}
+        \end{prooftree}
+        & \qquad &
+        \begin{prooftree}
+           \infer0[DLit]{c &\Mapsto c}
+        \end{prooftree}
+        \\
+        & \qquad & \\
+        \begin{prooftree}
+           \hypo{e &\Mapsto w}
+           \infer1[DVeeL]{e \vee e' &\Mapsto w}
+        \end{prooftree}
+        & \qquad &
+        \begin{prooftree}
+           \hypo{e &\Mapsto w}
+           \infer1[DVeeR]{e' \vee e &\Mapsto w}
+        \end{prooftree}
+        \\
+        & \qquad & \\
+        \begin{prooftree}
+           \hypo{e &\Mapsto w}
+           \hypo{e' &\Mapsto w'}
+           \infer2[DCat]{e \cdot e' &\Mapsto ww'}
+        \end{prooftree}
+        & \qquad &
+        \begin{prooftree}
+           \hypo{e [ \mu x . e / x ] &\Mapsto w}
+           \infer1[DFix]{\mu x . e &\Mapsto w}
+        \end{prooftree}
+      \end{array}
+      \end{math}
+    #+end_figure
+
+    There are three first-order language generators: \(\bot\) for the empty
+    language, \(\epsilon\) for the language of the empty string only, and
+    \( c \) for a language containing the single-symbol string \( c \) only.
+
+    There are two second-order combinators. Concatenation, \( g \cdot g' \)
+    takes words from \( g \) and concatenates them with words from \( g' \).
+    Alternation, \( g \vee g' \), forms the union of the languages \( g \) and
+    \( g' \).
+
+    Finally, there is the least-fixed-point combinator \(\mu g\). This is the
+    union \( \bigcup_{n\in\mathbb{N}} g^n(\bot) \), assuming \( g \) is
+    monotone. It is the fixed point as \( g (\mu g) = \mu g \).
+
+    To complete the definition of \(\mu\)-regular expressions as language
+    generators, figure [[fig:mu-reg-def]] also shows the derivation relation. Leiß
+    cite:null found that \(\mu\)-regular expressions describe context-free
+    languages. This means that for any \(\mu\)-regular expression, there is a
+    context-free grammar with the same language, and vice versa. One consequence
+    of this means that general \(\mu\)-regular expressions take super-linear
+    time to parse.
+
+    Context-free grammars resolve the parse complexity problem by a
+    transformation into a push-down automaton. The algebraic nature of
+    \(\mu\)-regular expressions lends itself to a type system instead.
+    
+*** KY Type System
+    *Note: All definitions are taken from cite:null. To what extent do they need
+    citations?*
+
+    The KY type system is a type judgement for \(\mu\)-regular expressions. If
+    an expression is well typed, then there exists a top-down parser for the
+    language of the expression.
+    
+    There are three properties of languages that are particularly interesting,
+    named \( \Null \), \( \First \) and \( \Flast \). Their definitions are in
+    figure [[fig:lang-props]]. To summarise, a langauge \( L \) is \( \Null \) when
+    it contains the empty string. The \( \First \) set is the set of symbols
+    starting strings in \( L \), and the \( \Flast \) set is the set of symbols
+    that immediately follow strings in \( L \) to make a bigger string in
+    \( L \).
+    
+    #+label: fig:lang-props
+    #+name: fig:lang-props
+    #+caption: Definitions of \( \Null \), \( \First \) and \( \Flast \)
+    #+begin_figure
+      \begin{gather*}
+        \Null L \iff \epsilon \in L \\
+        \begin{align*}
+          \First L &= \{ c \in \Sigma \mid \exists w \in \Sigma^*.\, cw \in L \} \\
+          \Flast L &=
+             \{ c \in \Sigma
+             \mid \exists w \in \Sigma^+, w' \in \Sigma^*.\,
+               w \in L \wedge wcw' \in L
+             \}
+        \end{align*}
+      \end{gather*}
+    #+end_figure
+    
+    A /KY type/ \( \tau \) is a record \( \{\textsc{Null} \in \mathbb{B} ,
+    \textsc{First} \subseteq \Sigma , \textsc{Flast} \subseteq \Sigma \}\). A
+    language /satisfies/ a type, \( L \vDash \tau \), when \( \Null L \le
+    \tau.\textsc{Null} \wedge \First L \subseteq \tau.\textsc{First} \wedge
+    \Flast L \subseteq \tau.\textsc{Flast} \). This definition means that a type
+    always over-approximates a language's properties. As types are triples of
+    values, they can be manipulated by functions. Figure [[fig:mu-type]] shows some
+    basic types and some operations on them. It also describes two relations on
+    types, used by the typing judgement.
+    
+    #+label: fig:mu-type
+    #+name: fig:mu-type
+    #+caption: Some KY types and operations and relations on them
+    #+begin_figure
+    \[ b \Rightarrow s = \If b \Then s \Else \emptyset \]
+    \begin{align*}
+      \tau_{\bot} &= ( \False, \emptyset, \emptyset ) \\
+      \tau_{\epsilon} &= ( \True, \emptyset, \emptyset ) \\
+      \tau_{c} &= ( \False, \{ c \} , \emptyset )
+    \end{align*}
+    \begin{align*}
+      \tau \vee \tau' &= \left\{ \begin{array}{rl}
+           \textsc{Null} = &\tau.\textsc{Null} \vee \tau'.\textsc{Null} \\
+           \textsc{First} = &\tau.\textsc{First} \cup \tau'.\textsc{First} \\
+           \textsc{Flast} = &\tau.\textsc{Flast} \cup \tau'.\textsc{Flast}
+         \end{array}\right\} \\
+      \tau \cdot \tau' &= \left\{ \begin{array}{rl}
+           \textsc{Null} = &\tau.\textsc{Null} \wedge \tau'.\textsc{Null} \\
+           \textsc{First} = &\tau.\textsc{First} \cup (\tau.\textsc{Null} \Rightarrow \tau'.\textsc{First}) \\
+           \textsc{Flast} = &\tau'.\textsc{Flast} \cup (\tau'.\textsc{Null} \Rightarrow \tau'.\textsc{First} \cup \tau.\textsc{Flast})
+         \end{array}\right\}
+    \end{align*}
+    \begin{align*}
+      \tau \circledast \tau' &= (\tau.\textsc{Flast} \cap \tau'.\textsc{First} = \emptyset) \wedge \neg \tau.\textsc{Null} \\
+      \tau \# \tau' &= (\tau.\textsc{First} \cap \tau'.\textsc{First} = \emptyset) \wedge \neg (\tau.\textsc{Null} \wedge \tau'.\textsc{Null})
     \end{align*}
     #+end_figure
 
-**** Chomsky Hierarchy
-     *TODO: needs citations*
-     
-     Introduce a set \( N \) of non-terminal symbols. Distinguish one symbol
-     \( S \in N \) as the start symbol. A production rule \( u \to v \) is a
-     rewriting rule, where \( u \in (\Sigma \uplus N)^* N (\Sigma \uplus N)^*\)
-     and \( v \in (\Sigma / S \uplus N)^* \).
+    Since the aim is to build a top-down parser, an expression cannot be left
+    recursive. The KY type system achieves this using two /variable contexts/. A
+    variable context is a map from variables to type. One of the variable
+    contexts is /unguarded/, meaning that variables can be used freely. The
+    other context is /guarded/, meaning variables can only be used on the right
+    side of a concatenation.
 
-     A set of production rules forms a grammar, \( G \).
-
-     From the start symbol, the string is successively rewritten using the
-     grammar. For a rule \( u \to v \), a string \( wuw' \) can be rewritten as
-     \( wvw' \). This repeats until there are no more non-terminal symbols in
-     the string. The final string is in the language generated by the grammar,
-     \( L(G) \) and the sequence of rule applications is the derivation.
-
-     Chomsky cite:null found restricting the form of strings \( u \) and \( v \)
-     in production rules results in different language classes. These language
-     classes are shown in table [[tab:chomsky]].
-
-     #+label: tab:chomsky
-     #+caption: Chomsky Hierarchy of grammars
-     #+attr_latex: :float t :booktabs :align lccl
-     | Grammar | \(u \in\)                                     | \(v \in\)                   | Languages              |
-     |---------+-----------------------------------------------+-----------------------------+------------------------|
-     | Type-0  | \((\Sigma \uplus N)^* N (\Sigma \uplus N)^*\) | \((\Sigma / S \uplus N)^*\) | Recursively enumerable |
-     | Type-1  | \((\Sigma \uplus N)^* N (\Sigma \uplus N)^*\) | \((\Sigma / S \uplus N)^+\) | Context-sensitive      |
-     | Type-2  | \(N\)                                         | \((\Sigma / S \uplus N)^*\) | Context-free           |
-     | Type-3  | \(N\)                                         | \(N \cup N(\Sigma / S)\)    | Regular                |
-
-**** \(\mu\)-Regular Expressions
-     Figure [[fig:regex]] gives the syntax and denotation of regular
-     expressions. Their denotation is how they are interpreted as a language.
-     *Someone* cite:null proved there is an equivalence between Type-0 grammars
-     and regular expressions.
-
-     #+label: fig:regex
-     #+caption: Syntax and denotation of regular expressions
-     #+begin_figure
-       \[
-         e ::= \bot \mid \epsilon \mid c \mid e + e \mid e \cdot e \mid e^*
-       \]
-       \begin{align*}
-         &\llbracket \bot \rrbracket &&= \emptyset \\
-         &\llbracket \epsilon \rrbracket &&= \{ \epsilon \} \\
-         &\llbracket c \rrbracket &&= \{ c \} \\
-         &\llbracket e + e' \rrbracket &&=
-           \llbracket e \rrbracket \cup \llbracket e' \rrbracket \\
-         &\llbracket e \cdot e' \rrbracket &&=
-           concat(\llbracket e \rrbracket, \llbracket e' \rrbracket) \\
-         &\llbracket e^* \rrbracket &&=
-           star(\llbracket e \rrbracket)
-       \end{align*}
-       \begin{align*}
-         star(X) &= \bigcup_{i \in \mathbb{N}} L_i \text{ where }
-           \begin{array}{ll}
-             L_0 & = \{ \epsilon \} \\
-             L_{n+1} & = concat(X, L_n)
-           \end{array} \\
-         concat(X, Y) &= \{ ww' \in \Sigma^* \mid \exists w \in X, w' \in Y \}
-       \end{align*}
-     #+end_figure
-
-     \(\mu\)-regular expressions make two modifications. The first is the
-     introduction of variables. The second is a generalisation of the Kleene
-     star \( e^* \) to fixed point expressions \( \mu x. e \). Because of
-     the addition of variables, the denotation is now a function from a variable
-     map to languages. The new syntax and denotation is in figure [[fig:mu-regex]].
-
-     #+label: fig:mu-regex
-     #+caption: Syntax and denotation of \(\mu\)-regular expressions
-     #+begin_figure
-       \[
-         g ::= \bot \mid \epsilon \mid c \mid x \mid g + g \mid g \cdot g \mid \mu x. g
-       \]
-       \begin{align*}
-         &\llbracket \bot \rrbracket \gamma &&= \emptyset \\
-         &\llbracket \epsilon \rrbracket \gamma &&= \{ \epsilon \} \\
-         &\llbracket c \rrbracket \gamma &&= \{ c \} \\
-         &\llbracket x \rrbracket \gamma &&= \gamma(x) \\
-         &\llbracket g + g' \rrbracket \gamma &&=
-           \llbracket g \rrbracket \gamma \cup
-           \llbracket g' \rrbracket \gamma \\
-         &\llbracket g \cdot g' \rrbracket \gamma &&=
-           \{ ww' \in \Sigma^*
-           \mid \exists w \in \llbracket g \rrbracket \gamma,
-                        w' \in \llbracket g' \rrbracket \gamma
-           \} \\
-         &\llbracket \mu x. g \rrbracket \gamma &&=
-           fix(\lambda X. \llbracket g \rrbracket (\gamma, X/x))
-       \end{align*}
-       \[
-         fix(f) = \bigcup_{n \in \mathbb{N}} f^n (\bot)
-       \]
-     #+end_figure
-     
-     Leiß cite:null proved that \( e^* = \mu x. \epsilon + e \cdot x \), hence
-     \(\mu\)-regular expressions can represent all regular languages. *Someone*
-     cite:null further showed that \(\mu\)-regular expressions are equivalent to
-     Type-1 grammars.
-
-*** KY Type System
-    * key language properties
-    * type definition
-    * type satisfiability
-    * variable context
-    * type judgement
-   
-*** Parser Generators
-
-**** State Machines
+    Figure [[fig:mu-judge]] gives the full typing judgement of the KY type system.
+    Of particular note, the TFix rule assumes \( x \) is guarded in the
+    hypothesis, the TCat rule shifts the guarded context into the unguarded one
+    for the right side, and the TVar rule can only reference unguarded
+    variables. Krishnaswami and Yallop showed cite:null that is an expression
+    has a complete typing judgement when the two variable contexts are empty, it
+    is possible to compute a parser for the language of that expression.
     
-     * machines for each hierarchy
-
-**** \(LR(\kappa)\)
-     * problem with cfl
-     # * LR(κ) solution
-
-**** Parser Combinators
-     * describe combinators
-     * describe problems
-
-*** Formal Languages
-    *NOTE: This could possibly benefit from a couple of figures.*
+    #+label: fig:mu-judge
+    #+name: fig:mu-judge
+    #+caption: KY typing judgement
+    #+begin_figure
+    \begin{math}
+    \begin{array}{ccc}
+      \begin{prooftree}
+        \infer0[TBot]{\Gamma; \Delta &\vdash \bot : \tau_{\bot}}
+      \end{prooftree}
+      & \qquad &
+      \\
+      & \qquad &
+      \begin{prooftree}
+        \infer0[TEps]{\Gamma; \Delta &\vdash \epsilon : \tau_{\epsilon}}
+      \end{prooftree}
+      \\
+      \begin{prooftree}
+        \infer0[TChar]{\Gamma; \Delta &\vdash [ c ] : \tau_c}
+      \end{prooftree}
+      & \qquad &
+      \\
+      & \qquad &
+      \begin{prooftree}
+        \infer0[TVar]{\Gamma, x : \tau; \Delta &\vdash x : \tau}
+      \end{prooftree}
+      \\
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta &\vdash e : \tau} 
+        \hypo{\Gamma; \Delta &\vdash e' : \tau'} 
+        \hypo{\tau &\# \tau'}
+        \infer3[TVee]{\Gamma; \Delta &\vdash e \vee e' : \tau \vee \tau'}
+      \end{prooftree}
+      & \qquad &
+      \\
+      & \qquad &
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta &\vdash e : \tau} 
+        \hypo{\Gamma, \Delta; \cdot &\vdash e' : \tau'} 
+        \hypo{\tau &\circledast \tau'}
+        \infer3[TCat]{\Gamma; \Delta &\vdash e \cdot e' : \tau \cdot \tau'}
+      \end{prooftree}
+      \\
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta, x : \tau &\vdash e : \tau} 
+        \infer1[TFix]{\Gamma; \Delta &\vdash \mu x. e : \tau}
+      \end{prooftree}
+      & \qquad &
+    \end{array}
+    \end{math}
+    #+end_figure
     
-    *NOTE: Much of the second half is just a summary of Krishnaswami and
-    Yallop.*
-
-    A language is a set of strings. Some notable examples are: the empty
-    language, \( \emptyset \), containing no strings; the language containing
-    only the empty string, \( \{ \epsilon \} \); and the universal language, \(
-    U \), containing all strings.
+*** Hindley-Milner Type System
+    *TODO: Proof read*
     
-    A /recogniser/ is an algorithm that determines whether a given string is in
-    a language. We can group languages by the minimum computational complexity
-    of a recogniser. For example, a language is /regular/ if it can be
-    recognised in constant space.
+    The simply-typed lambda calculus (STLC) is possibly the simplest possible
+    type system, consisting of ground terms and functions only. System F is an
+    extension of the STLC, adding /polymorphism/, where values can have multiple
+    types.
 
-    A /regular expression/ is a description of a /regular language/ cite:null.
-    Different expressions can be composed by three operators: concatenation,
-    alternation and Kleene star. The regular expression \( baaa* \) describes a
-    language used by sheep, and \( ((\epsilon|b)ooga)* \) a language used by
-    stereotypical cave-people.
+    /Type inference/ is the assignment of types to expressions such that the
+    expression type checks. Whilst there are arguments for and against type
+    inference, when types are difficult to express, the option to elide them is
+    helpful. Unfortunately, type inference for System F is undecidable
+    cite:null.
 
-    Whilst regular expressions are useful, they have many limitations. For use
-    in artificial languages, the most important is that regular expressions
-    cannot match parentheses. That requires /context-free languages/.
-    Recognisers for context-free languages need linear space and polynomial
-    time.
+    To overcome this problem, Hindley and later Milner described a type system
+    with /parametric polymorphism/. Values either have a monotype, or a
+    polytype. A monotype is a regular STLC type. A polytype is an abstraction
+    over a monotype by adding in type variables, which are placeholders for
+    arbitrary monotypes. For example, the generic identity function has the
+    polytype \( \forall \alpha. \alpha \to \alpha \).
 
-    Leiß cite:10.1007/BFb0023771 showed that much like how regular expressions
-    describe regular languages cite:null, /\(\mu\)-regular expressions/ describe
-    context-free languages. These are regular expressions extended with a
-    fixed-point operator. This allows for expressions such as
-    \( \mu\alpha.([\alpha]|a) \),
-    which is the language for the strings ~a~, ~[a]~, ~[[a]]~, ...
+    A key part of the HM type system is /specialisation/. This is the
+    instantiation of one or more free variables in a polytype. The relation
+    \( \sigma \sqsubseteq \sigma' \) holds if \(\sigma\) can specialise to
+    \(\sigma'\).
 
-    Leiß cite:10.1007/BFb0023771 also found that fixed-point operators can
-    replace the need for the Kleene star operator.
-    \( a* = \mu\alpha.\epsilon|a\alpha \)
+    The syntax and type judgement for the HM type system is given in figure
+    [[fig:hm-type]]. Notice how HMVar specialises types. Conversely, only HMLet can
+    /generalise/ types -- monotypes with free variables become polytypes.
 
-    Krishnaswami and Yallop cite:10.1145/3314221.3314625 found there are three
-    properties of languages we find important, dubbed Null, First and Flast. A
-    language \( L \) is Null if \( \epsilon \in L \). A character is in the
-    First set of a language if there is a string in the language starting with
-    that character. For example, \( ((\epsilon|b)ooga)* \) has First set
-    \( \{ o, b \} \).
+    #+label: fig:hm-type
+    #+name: fig:hm-type
+    #+caption: HM syntax and typing judgement
+    #+begin_figure
+    \begin{align*}
+      e &= x \mid e e \mid \lambda x. e \mid \Let x = e \In e \\
+      \tau &= \alpha \mid \tau \to \tau \\
+      \sigma &= \tau \mid \forall \alpha. \sigma
+    \end{align*}
+    \begin{math}
+    \begin{array}{ccc}
+    \begin{prooftree}
+      \hypo{\sigma \sqsubseteq \tau}
+      \infer1[HMVar]{\Gamma, x : \sigma \vdash x : \tau}
+    \end{prooftree}
+    & \qquad &
+    \begin{prooftree}
+      \hypo{\Gamma \vdash e : \tau \to \tau'}
+      \hypo{\Gamma \vdash e' : \tau}
+      \infer2[HMApp]{\Gamma \vdash e e' : \tau'}
+    \end{prooftree}
+    \\ & \qquad & \\
+    \begin{prooftree}
+      \hypo{\Gamma, x : \tau \vdash e : \tau'}
+      \infer1[HMAbs]{\Gamma \vdash \lambda x. e : \tau \to \tau'}
+    \end{prooftree}
+    & \qquad &
+    \begin{prooftree}
+      \hypo{\Gamma \vdash e : \tau}
+      \hypo{\Gamma, x : \forall \alpha. \tau \vdash e' : \tau'}
+      \infer2[HMLet]{\Gamma \vdash \Let x = e \In e' : \tau'}
+    \end{prooftree}
+    \end{array}
+    \end{math}
+    #+end_figure
 
-    The Flast set of a language is harder to define. Suppose there is a string
-    \( u \in L \). If there is some string \( v \) and character \( x \) such
-    that \( uxv \in L \), then \( x \) is in the Flast set of \( L \).
-    Intuitively, it is the set of characters that follow an accepted string and
-    can make a new string.
-    
-*** Parsing Techniques
-    A /parser/ is a type of recogniser, which also extracts structure from the
-    input string. This structure is usually dubbed the /concrete parse tree/.
-    Given a \(\mu\)-regular expression, a parser for its language could give a
-    tree following the structure of the expression. *EXAMPLE?* 
+    By restricting introduction of polymorphism to \( \Let \) statements only,
+    type inference is not only possible, but is nearly linear is almost all
+    cases. The inference algorithm, called the /J algorithm/ is usually given in
+    tree form, as in figure [[fig:hm-infer]]. 
 
-**** Backus-Naur Form
-     Variations of the Backus-Naur form (BNF) are the standard way to describe
-     context-free languages. It describes a context-free language from its
-     production rules.
+    #+label: fig:hm-infer
+    #+name: fig:hm-infer
+    #+caption: The J algorithm
+    #+begin_figure
+    \begin{prooftree*}
+      \hypo{\tau = inst(\sigma)}
+      \infer1[JVar]{\Gamma, x : \sigma \vdash x : \tau}
+    \end{prooftree*}
+    \begin{prooftree*}
+      \hypo{\Gamma \vdash e : \tau}
+      \hypo{\Gamma \vdash e' : \tau'}
+      \hypo{\tau'' = newvar()}
+      \hypo{unify(\tau, \tau' \to \tau'')}
+      \infer4[JApp]{\Gamma \vdash e e' : \tau''}
+    \end{prooftree*}
+    \begin{prooftree*}
+      \hypo{\tau = newvar()}
+      \hypo{\Gamma, x : \tau \vdash e : \tau'}
+      \infer2[JAbs]{\Gamma \vdash \lambda x. e : \tau \to \tau'}
+    \end{prooftree*}
+    \begin{prooftree*}
+      \hypo{\Gamma \vdash e : \tau}
+      \hypo{\Gamma, x : \forall \alpha. \tau \vdash e' : \tau'}
+      \infer2[JLet]{\Gamma \vdash \Let x = e \In e' : \tau'}
+    \end{prooftree*}
+    #+end_figure
 
-     *TODO: insert bnf example*
-     
-     Figure ref:null shows an example of BNF code. Strings of characters, such
-     as ~"+"~, represent literal input strings. These are called terminal
-     symbols.
+    Instead of performing specialisation, JVar instead returns a general
+    instance of a polytype. All the bound type variables are instantiated by a
+    fresh generic type instance.
 
-     Names surrounded by angle brackets, such as ~<term>~, are called
-     non-terminal symbols. They represent places where a production rule will be
-     substituted, instead of any literal input. Every non-terminal is assigned a
-     set of production rules, separated by ~|~ characters.
+    Specialisation is then performed by JApp. The \(unify\) function coerces
+    both arguments to their join, or type inference fails if the join doesn't
+    exist. Recall that the join of two values is the least value greater than
+    them both. Therefore \(unify\) performs the least amount of specialisation
+    to give both arguments the same shape.
 
-     Other syntax is much like regular expressions. There are various standard
-     and non-standard extensions to this core syntax.
-
-     One criticism of BNF is that the production rules are part of a single,
-     mutually-recursive namespace. In our example, ~<expr>~ refers to ~<term>~
-     which refers to ~<expr>~. This single-namespace creates hidden dependencies
-     between different production rules, which can lead to surprising behaviour
-     when one is modified.
-
-     Someone *NOTE: find out who* cite:null showed that production rules used by
-     BNF and \(\mu\)-regular expressions are equivalent.
-     
-**** Parser Combinators
-     Consider concatenation and alternation. They each combine a number of
-     smaller expressions into one bigger expression. A parser for them would
-     combine a number of smaller parsers into one bigger parser. A construct
-     that combines or extends the behaviour of smaller parsers is called a
-     /parser combinator/.
-
-     Let's think about fixed-point expressions. They don't take a parser as an
-     argument. Instead, the argument is itself a parser combinator. This makes
-     the fixed-point operator a /higher-order parser combinator/, mapping a
-     parser combinator into a parser. Much like there is a hierarchy of function
-     orders, we find there is a similar hierarchy for parser combinators.
-
-     In general, parser combinators require some form of backtracking. Take for
-     example the regular expression \(apple|aardvark\). When we see an ~a~, we
-     don't know whether this the start of ~apple~ or ~aardvark~. This
-     non-determinism is why backtracking is essential.
-     
-**** Recursive Descent
-     Recursive descent parsers are the "natural" solution to parsing. cite:null
-     If you ask a student with no knowledge about parsers to construct a parser,
-     chances are they will build a recursive descent parser.
-
-     Recursive descent parsing is a top-down technique. You start with the
-     highest structural elements and work down to the small details. Parser
-     combinators are a form of recursive descent parser.
-
-     An interesting sub-class of recursive-descent languages are the
-     \(LL(\kappa)\) languages. These are languages that can be parsed by
-     recursive descent without backtracking cite:null. This is the class of
-     languages that are well-typed under the KY type system.
-
-**** Recursive Ascent
-     Whilst recursive descent work from the top down, recursive ascent parsers
-     work from the bottom upwards cite:null. Starting from the smallest details,
-     you build your way up to a final complete structure.
-
-     Recursive ascent parsers are typically implemented as push-down automata
-     cite:null. They keep a stack of parse results and use a large state table
-     to determine what action to perform.
-
-     One of the most widely-used recursive-ascent language classes is the
-     \(LR(\kappa)\) class of languages. This is what is used by most of the
-     popular parser generators cite:null. This is because \(LR(\kappa)\)
-     languages are non-backtracking.
-
-*** KY Type System
-    Under the KY type system, the /denotation/ of an expression is the language
-    it represents . This is shown in figure ref:null.
-
-    *TODO: Add denotation figure*
-    
-    A /type/ in the KY type system is a triple of three values: \textsc{Null},
-    \textsc{First} and \textsc{Flast}. Two important types are \( \bot= \{
-    \textsc{Null} = \mathbf{false}, \textsc{First} = \emptyset, \textsc{Flast} =
-    \emptyset \} \) and \( \epsilon = \{ \textsc{Null} = \mathbf{true},
-    \textsc{First} = \emptyset, \textsc{Flast} = \emptyset \} \).
-    
-    A language /satisfies/ a type if the type over-approximates the language
-    properties. For example, \( \emptyset \) satisfies all types, because it has
-    the most restrictive properties.
-
-    Next, we describe guarded and unguarded variables. In most programming
-    languages, Once a variable is defined, it can be used anywhere. This is not
-    the case in this type system. When a fixed point introduces a variable, it
-    cannot be used immediately; it is /guarded/. The variable can only be used
-    when it becomes /unguarded/, which happens on the right side of
-    concatenations.
-
-    In the expression \( \mu\alpha.\alpha x \), \( \alpha \) is guarded, so
-    cannot be referenced. However, in the expression \(
-    \mu\alpha.\epsilon|a\alpha \), it appears on the right of a concatenation,
-    so it is unguarded.
-
-    A /variable context/ is a pair of maps from variables to types. The two maps
-    correspond to guarded and unguarded variables. Because of this, a variable
-    can only appear in one of the two maps at a time.
-    
-    A typing judgement is a relation between variable contexts, expressions, and
-    types. \( \Gamma, \Delta \vdash e : \tau \) can be read: expression \( e \)
-    has type \( \tau \) in context \( \Gamma, \Delta \). Krishnaswami and Yallop
-    cite:10.1145/3314221.3314625 found that if an expression and type are
-    related by the KY typing judgement in figure cite:null, then the language of
-    the expression satisfies the type.
-    
-    *TODO: insert type rules figure*
-    
-    Krishnaswami and Yallop cite:10.1145/3314221.3314625 found there are three
-    sources of back-tracking for parser combinators: sequential non-determinism,
-    disjunctive non-determinism and non-left-factoring.
-
-    Consider the regular expression \(a*a*\). Given a string such as ~aaaa~,
-    there are five ways to parse it. This ambiguity is /sequential
-    non-determinism/. In general, it occurs when there are multiple ways to
-    split a string to parse a concatenation.
-
-    Now look at \((aa* | a*a)\). Given the string ~aaaa~, each alternative can
-    parse it in only one way. However, both alternatives can parse the string.
-    /disjunctive non-determinism/ is when multiple alternatives can parse the
-    same string.
-
-    Finally, think about the earlier \(apple|aardvark\) example. This is not
-    disjunctive non-determinism because the two alternatives have disjoint
-    languages. However, assume a parser can only see one character from the
-    input string at a time. If we can only see the ~a~ symbol, it is impossible
-    to know which alternative to take. This expression is not /left-factored/
-    --- the two alternatives share a prefix.
+    Variations of the HM type sytem are used by many functional programming
+    languages, such as ML and Haskell cite:null. 
 ** Requirements Analysis
    My core deliverable focused on implementing the KY type system. Having a well
    typed language description is nearly useless without a way to parse the
-   language. Hence another core component was /output of a chewed parser/. These
+   language. Hence another core component was to /output a chewed parser/. These
    two components could then be used to create a parser from any Nibble
    description.
 
-   Whilst sufficient to describe any context-free language, \(\mu\)-regular
-   expressions are awfully verbose. One stretch requirement was to introduce
-   /lambda expressions and named functions/. This would allow users of Nibble to
-   extract common patterns, greatly reducing the amount of Nibble they would
-   need to write.
+   One major feature of parser combinators is their composition into
+   higher-order combinators. The KY type system cannot directly type check these
+   higher-order combinators and must first perform some evaluation down to
+   combinators represented by \(\mu\)-regular expressions. This can lead to an
+   exponential increase in size of \(mu\)-regular expressions. I attempt to
+   eliminate this issue by /exploring adding functions and lambda expressions/
+   to \(\mu\)-regular expressions and to Nibble.
 
    There are many other ways Nibble could be extended. *TODO: list them*
 ** Starting Point
@@ -478,51 +614,407 @@
     common for projects written in Rust. These are permissive licenses that
     encourage development whilst limiting personal liability.
 *** Development Tools
-    The standard Rust build system is called Cargo. It allows an easy way to run
-    several kinds of checks against the whole code base. In particular  clippy 
-    is a static analysis tool that some style improvements and common bugs.
-    Also,  rustfmt  was regularly used to consistently format code.
+    The standard Rust build system is called Cargo. It provides an easy way to
+    run several kinds of checks against the whole code base. In particular
+    clippy is a static analysis tool that highlights some style improvements and
+    common bugs. Also, rustfmt was regularly used to consistently format code.
     
-    Tests were performed using Rust's built-in test harness. This allows the
-    user to write unit tests anywhere. It also provides a method of performing
-    integration tests.
+    Some tests were performed using Rust's built-in test harness. This allows
+    the user to write unit tests anywhere. It also provides a method of
+    performing integration tests.
 
-    Benchmarks were written using  criterion . This micro-benchmarking library
+    Benchmarks were written using  criterion. This micro-benchmarking library
     measures the performance of a function by measuring thousands of iterations.
     It also provides some simple statistical analysis and comparisons between
     functions.
-
-**** NOTE: Comments on tests
-     I don't have enough/any unit tests. All my tests come from some simple
-     integration tests. I am relying on AutoChomp being so complex and fragile
-     that any errors in the type system would break it entirely.
 * Implementation
-** \(\lambda\mu\)-Regular Expressions
-    *EXT: describe \(\lambda\mu\)-regular expressions*
+** The LM Type System
+   *NOTE: need beta reductions from the start. Makes the whole section more
+   complex.*
+   
+   This subsection has three parts. The first introduces a minimal way to add
+   lambda expressions to the KY type system. The second introduces function
+   types. Finally, the full LM type system is described, by adding polymorphism.
+*** Function Expressions.
+    The simplest way to introduce function expressions is using /macros/. These
+    are syntactic substitutions of the source code. Figure [[fig:func-exp]]
+    introduces the necessary syntax, derivation and typing rule to fully extend
+    the KY type system with function expressions.
+
+    #+name: fig:func-exp
+    #+label: fig:func-exp
+    #+caption: KY type system with function expressions
+    #+begin_figure
+      \[ e = \ldots \mid \lambda x. e \mid e e \]
+
+      \centering
+      \begin{prooftree}
+        \hypo{e [ e' / x ] \Mapsto w}
+        \infer1{(\lambda x. e) e' \Mapsto w}
+      \end{prooftree}
+      \qquad
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash e [ e' / x ] : \tau}
+        \infer1{\Gamma; \Delta \vdash (\lambda x. e) e' : \tau}
+      \end{prooftree}
+    #+end_figure
+
+    Macros have some advantages and disadvantages. Because they are only a
+    syntactic substitution, they are very easy to implement. They also help to
+    eliminate repetition in expressions. However, type checking is slightly less
+    efficient, because there first has to be a macro expansion stage. Finally,
+    it is dubious to call macros a change to the type system, given they can be
+    completely eliminated before type checking begins.
+*** Function Types
+    Unlike most type systems, which have a single variable context, the KY type
+    system has two. Hence there needs to be two different function types. Figure
+    [[fig:func-type]] shows the extended definition of types, as well as derivations
+    and typing rules for functions.
+    
+    #+name: fig:func-type
+    #+label: fig:func-type
+    #+caption: KY type system with function types
+    #+begin_figure
+    *TODO: Complete figure*
+    #+end_figure
+
+    *TODO: remarks on rules*
+
+    Unlike macros, function types only need to be checked once. This can lead to
+    a significant performance improvement. Unfortunately this type system is
+    monomorphic. Take the expression \(\lambda f. f \, (a \cdot f \, b)\). Here
+    \( f \) has a single type \(\tau \to \tau'\), but is applied to arguments of
+    two different types. Because \( \tau \) can be at most one of those types,
+    this expression fails to type check.
+
+    Adding implicit polymorphism would solve this failing of the typing
+    judgement. Unfortunately, just like System F, implicit polymorphism would
+    likely make inference undecidable. A more intelligent solution needs to be
+    found.
+*** Polymorphism
+    *TODO: figures maybe in an appendix?*
+    
+    The full LM type system uses a HM-style type system as a base, extended with
+    a constraint system. Figure [[fig:lm-type]] defines both monotypes \( \sigma \)
+    and polytypes \( \rho \).
+
+    #+label: fig:lm-type
+    #+name: fig:lm-type
+    #+caption: LM types
+    #+begin_figure
+    *TODO: define \(\sqsubseteq\)*
+    \begin{align*}
+      \tau &= \tau_\bot \mid \tau_\epsilon \mid \tau_c \mid \tau \cdot \tau \mid \tau \vee \tau \mid \alpha \\
+      \sigma &= \tau \mid \sigma \overset{C}{\to} \sigma \mid \sigma \overset{C}{\leadsto} \sigma \\
+      \rho &= \sigma \mid \forall \alpha. \rho
+    \end{align*}
+    #+end_figure
+
+    Figure [[fig:lm-expr]] gives the syntax and derivation relation of the
+    \(\lambda\mu\)-regular expressions used by the LM type system. With the
+    introduction of functions, simple substitution alone is not sufficient for
+    derivations. First, terms must be \(\beta\)-expanded until a primitive
+    first- or second-operation combinator is at the root.
+    
+    #+label: fig:lm-expr
+    #+name: fig:lm-expr
+    #+caption: \(\lambda\mu\)-expressions, \(\beta\) equivalence and derivations
+    #+begin_figure
+    \[
+      e = \bot \mid \epsilon \mid c \mid x \mid e \cdot e \mid e \vee e \mid \mu e \mid \lambda x. e \mid \Lambda x. e \mid e \, e \mid e \sim e \mid \Let x = e \In e \mid \Let' x = e \In e
+    \]
+    
+    \centering
+    \begin{math}
+    \begin{array}{ccc}
+      \begin{prooftree}
+        \infer0{e &\approx_\beta e}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{e &\approx_\beta \mu e'}
+        \infer1{e &\approx_\beta e' \sim \mu e'}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \hypo{e &\approx_\beta e'}
+        \infer1{e \, e'' &\approx_\beta e' \, e''}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{e &\approx_\beta e'}
+        \infer1{e \sim e'' &\approx_\beta e' \sim e''}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \hypo{e &\approx_\beta (\lambda x. e') e''}
+        \infer1{e &\approx_\beta e' [e'' / x]}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{e &\approx_\beta (\Lambda x. e') \sim e''}
+        \infer1{e &\approx_\beta e' [e'' / x]}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \hypo{e &\approx_\beta \Let x = e' \In e''}
+        \infer1{e &\approx_\beta e'' [e' / x]}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{e &\approx_\beta \Let' x = e' \In e''}
+        \infer1{e &\approx_\beta e'' [e' / x]}
+      \end{prooftree}
+      \\ & \qquad & \\
+    \end{array}
+    \end{math}
+
+    \begin{math}
+    \begin{array}{ccc}
+      \begin{prooftree}
+        \infer0{\epsilon &\Mapsto \epsilon}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \infer0{c &\Mapsto c}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \hypo{e &\Mapsto w}
+        \infer1{e \vee e' &\Mapsto w}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{e' &\Mapsto w}
+        \infer1{e \vee e' &\Mapsto w}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \hypo{e &\Mapsto w}
+        \hypo{e' &\Mapsto w'}
+        \infer2{e \cdot e' &\Mapsto ww'}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{e &\approx_\beta e'}
+        \hypo{e' &\Mapsto w}
+        \infer2{e &\Mapsto w}
+      \end{prooftree}
+    \end{array}
+    \end{math}
+    #+end_figure
+
+    Finally, there is the LM typing judgement,
+    \( \Gamma; \Delta \vdash e : \sigma; C \), where \( C \) meaning that under
+    context \( \Gamma; \Delta \), expression \( e \) has monotype \( \sigma \)
+    when the constraints \( C \) are all met. The definition is in [[fig:lm-judge]].
+    
+    #+label: fig:lm-judge
+    #+name: fig:lm-judge
+    #+caption: LM typing judgement
+    #+begin_figure
+    *TODO: be more formal about \( \forall \alpha. \sigma\)*
+    \centering
+    \begin{math}
+    \begin{array}{ccc}
+      \begin{prooftree}
+        \infer0{\Gamma; \Delta \vdash \bot : \tau_\bot ; \emptyset}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \infer0{\Gamma; \Delta \vdash \epsilon : \tau_\epsilon ; \emptyset}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \infer0{\Gamma; \Delta \vdash c : \tau_c ; \emptyset}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{\rho \sqsubseteq \sigma}
+        \infer1{\Gamma, x : \rho; \Delta \vdash x : \sigma ; \emptyset}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash e : \tau ; C}
+        \hypo{\Gamma, \Delta; \cdot \vdash e' : \tau' ; C'}
+        \infer2{\Gamma; \Delta \vdash e \cdot e' : \tau \cdot \tau' ; C \cup C' \cup \{\tau \circledast \tau'\}}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash e : \tau ; C}
+        \hypo{\Gamma; \Delta \vdash e' : \tau' ; C'}
+        \infer2{\Gamma; \Delta \vdash e \vee e' : \tau \vee \tau' ; C \cup C' \cup \{\tau \# \tau'\}}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \hypo{\Gamma, x : \sigma; \Delta \vdash e : \sigma' ; C}
+        \infer1{\Gamma; \Delta \vdash \lambda x. e : \sigma \overset{C}{\to} \sigma' ; \emptyset}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta, x : \sigma \vdash e : \sigma' ; C}
+        \infer1{\Gamma; \Delta \vdash \Lambda x. e : \sigma \overset{C}{\leadsto} \sigma' ; \emptyset}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash e : \sigma \overset{C''}{\to} \sigma' ; C}
+        \hypo{\Gamma; \Delta \vdash e' : \sigma ; C'}
+        \infer2{\Gamma; \Delta \vdash e \, e' : \sigma' ; C \cup C' \cup C''}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash e : \sigma \overset{C''}{\leadsto} \sigma' ; C}
+        \hypo{\Gamma, \Delta; \cdot \vdash e' : \sigma ; C'}
+        \infer2{\Gamma; \Delta \vdash e \sim e' : \sigma' ; C \cup C' \cup C''}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash e : \sigma ; C}
+        \hypo{\Gamma, x : \forall \alpha. \sigma; \Delta \vdash e' : \sigma' ; C'}
+        \infer2{\Gamma; \Delta \vdash \Let x = e \In e' : \sigma' ; C \cup C'}
+      \end{prooftree}
+      & \qquad &
+      \begin{prooftree}
+        \hypo{\Gamma, \Delta; \cdot \vdash e : \sigma ; C}
+        \hypo{\Gamma, x : \forall \alpha. \sigma; \Delta \vdash e' : \sigma' ; C'}
+        \infer2{\Gamma; \Delta \vdash \Let' x = e \In e' : \sigma' ; C \cup C'}
+      \end{prooftree}
+      \\ & \qquad & \\
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash e : \tau \overset{C'}{\leadsto} \tau ; C}
+        \infer1{\Gamma; \Delta \vdash \mu e : \tau ; C \cup C'}
+      \end{prooftree}
+      & \qquad &
+    \end{array}
+    \end{math}
+    #+end_figure
+
+    Note that typing rules for elements taken from \(\mu\)-regular expressions
+    remain largely the same. One change is that fixed points now take an
+    explicit function instead of implicitly defining one. The second change is
+    that concatenation and alternation move the type constraint from the premise
+    to the overall constraint set. The final change is that variable references
+    now use specialisation.
+    
+    *TODO: why two lets? can it be only one?*
+    
+    *TODO: comment on other rules*
+
+    *TODO: prove if there's time*
+
+    I conjecture that for all expressions \( e \), if \( \cdot; \cdot \vdash e :
+    \tau ; C \) and constraints \( C \) are met, then I can generate a
+    deterministic linear-time parser for the language described by \( e \).
+** Nibble
+   *TODO: implement language changes in Nibble*
+
+   Figure [[fig:nibble-ex]] shows how Nibble can describe basic arithmetic.
+
+   *TODO: decide whether to describe current state or future goal*
+
+   #+label: fig:nibble-ex
+   #+name: fig:nibble-ex
+   #+caption: Nibble code describing basic arithmetic
+   #+begin_src rust
+          // TODO: update with syntax change
+          let opt(x) = _ : None | x : Some;
+          let star(x) = [rec](opt(x.rec));
+          let plus(x) = (x : First).(star(x) : Rest);
+
+          let ws = star(" ");
+          let list(x, p) = (x : First).(star(p.ws.x) : Rest);
+
+          let number = plus("0" | "1" | "2"| "3" | "4" | "5" | "6" | "7" | "8" | "9");
+          let term(e) =
+             (( number : Pos
+              | "-".ws.number : Neg
+              | "(".ws.(e : Inner).")" : Parens)
+              : RawTerm).ws;
+          let prod(e) = list(term(e), "*"|"/");
+          let expr(e) = list(prod(e), "+"|"-");
+          let arith = [e](expr(e));
+
+          match [rec]((" ".rec : Base | arith) : Ast);
+   #+end_src
+
+   There are some differences between Nibble and \(\lambda\mu\)-regular
+   expressions. First, \(\bot\) is not at all present in Nibble. Being able to
+   match an empty language is not a useful feature in practice.
+
+   Additionally, let expressions can only appear at the top level -- a let
+   expression cannot appear within any other expression. *Why?*. Let expressions
+   also have some syntactic sugar to make it easier to define functions.
+   *Explain.*
+   
+** Chomp
+  *TODO: very much a sketch*
+*** Libraries and Frameworks
+    * Why did I use Rust?
+      * Familiar with the language
+      * ~proc_macro~ takes arbitrary embedded code and replaces with arbitrary
+        source code
+    * Why did I use ~proc_macro2~?
+      * Can build Rust token stream for output code generation
+      * Compatible with built-in ~proc_macro~ system for easy staging
+    * Why did I use ~syn~?
+      * Parser framework for a ~proc_macro~ token stream
+      * Chomp can reuse parser components from Rust language
+    * Why did I use ~quote~?
+      * Standard way to output a token stream
+      * Takes source code and converts into token stream constructor at compile
+        time.
+*** Interesting Components
+**** Variable Context
+**** Visitor Pattern
+**** Code Generation
 * Evaluation
+  *TODO: very much a sketch*
+** Validity
+   * Chewed parsers fulfil Nibble description
+     * Proof or bootstrapping evidence
+** Qualitative
+   * Nibble is easier to write than BNF
+     * Very subjective
+     * Left factoring makes things quite difficult
+       * Just as hard for LL BNF
+     * Different types of functions could be confusing
+     * Lack of lexer!
+   * Nibble is easier to read than BNF
+     * Very subjective
+     * More control over alternation position makes things easier
+     * Lack of lexer!
+   * Chomp is easier to integrate
+     * Than parser combinators
+       * Requires thought
+     * Than traditional parser generators
+       * Maybe
+       * Harder to add to project
+       * Easier to write supporting code
+     * Than hand-made parsers
+       * No
+       * No additional components
+       * Easier to write supporting code
+       * Harder to write parser elements
+** Quantitative
+   * Chewed parsers have linear time complexity
+     * True
+     * Include graph
+   * Chewed parser performance
+     * Not slower than parser combinators
+       * Write benchmark first
+     * Not slower than traditional parser generators
+       * Comparable
+       * Have JSON benchmarks
+     * Not slower than hand-made parsers
+       * False
+       * Have JSON benchmarks
+   * Chewed parser compilation
+     * Not slower than parser combinators
+       * Write external benchmark
+     * Not slower than traditional parser generators
+       * Write external benchmark
+     * Not slower than hand-made parsers 
+       * Write external benchmark
 * Conclusion
-* Glossary
-  # - chewed parser: output parser from Chomp
-  # - Chomp: a parser generator for Nibble using the LM type system
-  # - derivation: set of production rules to produce a string
-  # - First: \( First(L) = \{ x \mid \exists w \in \Sigma^*. xw \in L \} \)
-  # - Flast:
-  #   \( First(L) = \{ x \mid \exists w \in \Sigma^*/\emptyset, w\' \in \Sigma^*. w \in L \wedge wxw' \in L \} \)
-  # - grammar: set of production rules
-  # - KY type system: type system for \(\mu\)-regular expressions
-  # - language: set of strings over an alphabet
-  # - LM type system: type system for \(\lambda\mu\)-regular expressions
-  # - Nibble: DSL for \(\lambda\mu\)-regular expressions
-  # - non-terminal: another set of symbols
-  # - Null: \( Null(L) \iff \emptyset \in L \)
-  # - parser: function from string to derivation
-  # - parser combinator: higher-order function from parser to parser
-  # - parser generator: program from production rules to parser source code
-  # - production rule: transform semantic idea into syntactic string
-  # - regular expression: concise description of regular language
-  # - start symbol: distinguished non-terminal
-  # - \(\lambda\mu\)-regular expression: extension of \(\mu\)-regular expression
-  #   with functions
-  # - \(\mu\)-regular expression: concise description of context-free language
 * References
   \printbibliography[heading=none]{}
