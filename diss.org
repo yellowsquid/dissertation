@@ -20,6 +20,7 @@
 # shorthand
 #+latex_header: \newcommand\mre{\(\mu\)-regular expression}
 #+latex_header: \newcommand\mres{\(\mu\)-regular expressions}
+#+latex_header: \newcommand\ky{Krishnaswami-Yallop}
 
 # try to avoid widows and orphans
 #+latex_header: \raggedbottom
@@ -33,64 +34,7 @@
 list-of-figures:nil
 
 \pagestyle{headings}
-* Pink Book
-** Introduction [0/3]
-   * [ ] Principal motivation
-   * [ ] Fits into surrounding CS
-   * [ ] Summary of previous work
-** Preparation [0/6]
-   The work before the code was written.
 
-   * [ ] Complex theories needing understanding
-   * [ ] New programming languages
-   * [ ] Requirements analysis
-   * [ ] Software engineering techniques
-   * [ ] Refinements to proposal
-   * [ ] Starting point
-** Implementation [0/5]
-   What the project managed to produce.
-
-   * [ ] Describe key theories
-   * [ ] Repository overview
-     * [ ] One page
-     * [ ] High-level structure
-     * [ ] Line counts
-   * [ ] Describe key algorithms
-     * [ ] With code
-   * [ ] Demonstrate design for testing
-   * [ ] Describe design choices
-** Evaluation [0/3]
-   Signs of success
-
-   * [ ] Meeting the success criterion
-   * [ ] Meeting goals of Nibble
-   * [ ] Meeting goals of Chomp
-** Conclusion [0/3]
-   * [ ] Return to introduction
-   * [ ] Lessons learned
-   * [ ] Future work
-* List of Tasks
-  - [ ] Structure!
-    - [ ] More section references.
-    - [ ] Introductions need to be higher level
-    - [ ] Headings are big claims!
-  - [ ] Target audience!
-  - [ ] KY-\lambda substitution
-    - [ ] 10.1145/582153.582176
- 
-  - [ ] https://savage.net.au/Marpa.html
-
-  - [ ] Surjective!
- 
-  - [ ] Fix first and flast typography.
-  - [ ] Major edit to introduction to improve story telling
-  - [ ] All of Alan's tweaks to the introduction
-  - [ ] Delete depending on amount of extension. Shouldn't be too significant a
-    difference overall
-  - [ ] Reduction => Translation
-  - [ ] Remove a bunch of maths delimiters.
-  - [ ] Describe BNF
-  - [ ] Define lexer in background
 * Introduction
   A /language/ is a set of strings over some alphabet of symbols. For example, a
   dictionary enumerates a language over written characters. Spoken English is a
@@ -133,7 +77,7 @@ list-of-figures:nil
   Unfortunately, the ease of use of parser combinators comes with a price. Most
   implementations of parser combinators use backtracking, which can lead to
   exponential worst-case parse time. Fortunately, a recent result by
-  Krishnaswami and Yallop cite:null found a type system (the /KY type system/)
+  Krishnaswami and Yallop cite:null found a type system (the /\ky{} type system/)
   for some primitive parser combinators that only accepts linear-time
   deterministic parsers.
   
@@ -141,9 +85,9 @@ list-of-figures:nil
    *TODO: Rewrite*
 
    Some parser combinators can be defined by composing smaller combinators
-   together. The KY type system handles this by evaluating the higher-order
+   together. The \ky{} type system handles this by evaluating the higher-order
    combinators until they reach the base combinators. In section ref:null I form
-   the /LM type system/ by extending the KY type system to handle higher-order
+   the /LM type system/ by extending the \ky{} type system to handle higher-order
    combinators directly.
 
    Next, I design /Nibble/ in section ref:null. Nibble is a new DSL for
@@ -169,9 +113,9 @@ list-of-figures:nil
    the rest of this dissertation. Next, it discusses formal grammars. Formal
    grammars are the traditional way to study context-free languages *(why have
    them?)*. Following this, it describes parser combinators and an algebraic
-   interpretation of them. This algebraic interpretation is the core of the KY
+   interpretation of them. This algebraic interpretation is the core of the \ky{}
    type system and the extended LM type system. Finally this subsection
-   describes the KY type system.
+   describes the \ky{} type system.
    
 *** Formal Languages
     Given an alphabet, \( \Sigma \), a /language/
@@ -364,11 +308,11 @@ list-of-figures:nil
     transformation into a push-down automaton. The algebraic nature of \mres{}
     lends itself to a type system instead.
     
-*** KY Type System
+*** \ky{} Type System
     *Note: All definitions are taken from cite:null. To what extent do they need
     citations?*
 
-    The KY type system is a type judgement for \mres{}. If an expression is well
+    The \ky{} type system is a type judgement for \mres{}. If an expression is well
     typed, then there exists a top-down parser for the language of the
     expression.
     
@@ -397,7 +341,7 @@ list-of-figures:nil
       \end{gather*}
     #+end_figure
     
-    A /KY type/ \( \tau \) is a record \( \{\textsc{Null} \in \mathbb{B} ,
+    A /\ky{} type/ \( \tau \) is a record \( \{\textsc{Null} \in \mathbb{B} ,
     \textsc{First} \subseteq \Sigma , \textsc{Flast} \subseteq \Sigma \}\). A
     language /satisfies/ a type, \( L \vDash \tau \), when \( \Null L \le
     \tau.\textsc{Null} \wedge \First L \subseteq \tau.\textsc{First} \wedge
@@ -409,7 +353,7 @@ list-of-figures:nil
     
     #+label: fig:mu-type
     #+name: fig:mu-type
-    #+caption: Some KY types and operations and relations on them
+    #+caption: Some \ky{} types and operations and relations on them
     #+begin_figure
     \[ b \Rightarrow s = \If b \Then s \Else \emptyset \]
     \begin{align*}
@@ -436,13 +380,13 @@ list-of-figures:nil
     #+end_figure
 
     Since the aim is to build a top-down parser, an expression cannot be left
-    recursive. The KY type system achieves this using two /variable contexts/. A
+    recursive. The \ky{} type system achieves this using two /variable contexts/. A
     variable context is a map from variables to type. One of the variable
     contexts is /unguarded/, meaning that variables can be used freely. The
     other context is /guarded/, meaning variables can only be used on the right
     side of a concatenation.
 
-    Figure [[fig:mu-judge]] gives the full typing judgement of the KY type system.
+    Figure [[fig:mu-judge]] gives the full typing judgement of the \ky{} type system.
     Of particular note, the TFix rule assumes \( x \) is guarded in the
     hypothesis, the TCat rule shifts the guarded context into the unguarded one
     for the right side, and the TVar rule can only reference unguarded
@@ -452,7 +396,7 @@ list-of-figures:nil
     
     #+label: fig:mu-judge
     #+name: fig:mu-judge
-    #+caption: KY typing judgement
+    #+caption: \ky{} typing judgement
     #+begin_figure
     \begin{math}
     \begin{array}{ccc}
@@ -612,7 +556,7 @@ list-of-figures:nil
     Variations of the HM type sytem are used by many functional programming
     languages, such as ML and Haskell cite:null. 
 ** Requirements Analysis
-   My core deliverable focused on implementing the KY type system. Having a well
+   My core deliverable focused on implementing the \ky{} type system. Having a well
    typed language description is nearly useless without a way to parse the
    language. Hence another core component was to /output a chewed parser/. These
    two components could then be used to create a parser from any Nibble
@@ -621,7 +565,7 @@ list-of-figures:nil
    *TODO: rewrite*
    
    One major feature of parser combinators is their composition into
-   higher-order combinators. The KY type system cannot directly type check these
+   higher-order combinators. The \ky{} type system cannot directly type check these
    higher-order combinators and must first perform some evaluation down to
    combinators represented by \mres{}. This can lead to an exponential increase in
    size of \(mu\)-regular expressions. I attempt to eliminate this issue by
@@ -629,7 +573,7 @@ list-of-figures:nil
 
    There are many other ways Nibble could be extended. *TODO: list them*
 ** Starting Point
-   I closely studied the KY type system before beginning the project. I did not
+   I closely studied the \ky{} type system before beginning the project. I did not
    begin any work on possible extensions to it.
 
    The project builds on ideas about formal languages. These have been studied
@@ -688,443 +632,797 @@ list-of-figures:nil
     It also provides some simple statistical analysis and comparisons between
     functions.
 * Implementation
-  This section is split into two parts. The first describes Nibble, a new
-  practical DSL for describing languages, and two type systems for it. The
-  second describes Chomp, which is a parser generator from Nibble to Rust,
-  implemented in Rust.
+  There are two areas of implementation for this project. The first is the
+  design of Nibble, which is a DSL (section [[*Domain Specific Languages]]) for
+  describing formal languages made to fix the problems of \mres{} as explored in
+  section [[*\mres{}]]. It also describes the theoretical implementation of two type
+  systems for Nibble. The second explores the implementation of Chomp, a parser
+  generator implemented in Rust. Chomp takes Nibble expressions and, for
+  well-typed expressions, produces Rust source code for a parser of the formal
+  language described by the Nibble expression.
 
-  We start by explaining the changes from \mres{} to Nibble. This is followed by
-  descriptions of two type systems. KY-\(\lambda\) is a macro-based type
-  system, making heavy use of syntactic replacement. This is the type system
-  used by Chomp. \(LM\) is a Hindley-Milner type system with a constraint
-  checker, adding polymorphic types to the *KY-\(\lambda\)* type system.
+  We start in section [[*The Nibble Language]] by introducing the syntax and
+  semantics of Nibble, explaining how it solves the problems of \mres{}. Then in
+  section [[*Type Systems for Nibble]], we describe the design of two type systems
+  for Nibble: \ky{}-\lambda in section [[*The \ky{}-\lambda Type System]] and LM in
+  section [[*The LM Type System]].
 
-  The second part describes Chomp, starting with an overview of the code
-  repository and a quick look at why Rust was used. A detailed view of the core
-  generation pipeline follows this. Finally there is a discussion of the
-  procedural macro system in Rust and how it is used by Chomp.
+  Next we move on to describing Chomp, starting with the structure of its code
+  repository and overall architecture in section [[*Chomp Repository Overview]].
+  Chomp has an architecture similar to other compilers and translators (section
+  [[*Translators]]). The front-, middle- and back-ends of Chomp are described in
+  sections [[*The Front-End: Parsing and Normalisation]], [[*The Middle-End: Type
+  Inference]], and [[*The Back-End: Code Generation]] respectively.
 
-** Syntax of Nibble
-   Nibble is a language to describe languages. This means that they are
-   semantically interpreted as language generators and generator combinators,
-   just like \mres{}. The best way to introduce Nibble is by a direct comparison
-   with \mres{}, like in figure [[fig:nibble-vs-mu]].
+** The Nibble Language
+   Nibble is a DSL for describing formal languages. Semantically, a Nibble
+   expression represents a formal language. Nibble is designed to be a
+   user-friendly alternative to \mres{}. In section [[*\mres{}]], we discussed some
+   issues with \mres{} that made them impractical to describe non-trivial
+   languages. Nibble solves these problems by introducing let statements and
+   lambda abstractions.
 
-   #+label: fig:nibble-vs-mu
-   #+name: fig:nibble-vs-mu
-   #+caption: Comparison of Nibble and \mres{} describing signed binary arithmetic.
-   #+begin_figure
-   *TODO: figure*
-   #+end_figure
+   For Nibble expressions to be a suitable replacement for \mres{}, Nibble must
+   be able to describe the same set of languages. Nibble achieves this by
+   directly embedding \mres{}. Listing [[lst:nibble-embeds-mu]] shows how Nibble
+   embeds the \mre{} from figure [[fig:mu-baa]].
 
-   \mres{} contain lots of repetitions. For example, *example*. Nibble
-   eliminates this repetition using two mechanisms. One is named let
-   expressions. These introduce a new variable binding, eliminating identical
-   code structures. The other is lambda expressions. These are parameterised
-   expressions. Semantically, both let expressions and lambda expressions
-   correspond to generator combinators.
+   #+label: lst:nibble-embeds-mu
+   #+name: lst:nibble-embeds-mu
+   #+caption: Nibble expressions embed \mres{}.
+   #+begin_src rust
+   match "b".!(/x/ (_|"a".x))
+   #+end_src
 
-   Recall that a language generator is a function from derivations into strings.
-   Therefore we need a way to convert Nibble expressions into derivations. This
-   can be done by /reducing/ the Nibble expressions by eliminating let
-   expressions and function calls at the top level. The resulting expression has
-   a combinator borrowed from \mres{} at the top level, and uses the
-   corresponding derivation rule.
-
-   Reduction is similar to call-by-name evaluation of programming languages.
-   Given a let expression, all occurrences of the binding variable in the body are
-   substituted with the bound expression. A function call on a lambda expression
-   behaves similarly. *Examples.*
+   *TODO: Is this the best place for this paragraph? Could move to section
+   [[*\mres{}]]*
    
-   There are several other minor changes between Nibble and \mres{}. Nibble does
-   not include an equivalent for \(\bot\): there are few, if any, practical uses
-   for the empty language. Literals can be a sequence of characters instead of
-   only a single character. This aligns closer with programmer intentions than
-   lots of single character concatenations. Other syntactic elements of \mres{}
-   were converted to ASCII for ease of input. Finally, fixed-point expressions
-   take a lambda abstraction instead of directly introducing the fixed-point
-   variable.
+   The first difference between Nibble and \mres{} is that Nibble does not embed
+   \(\bot\). By itself, \(\bot\) has no practical use -- there is no need to
+   parse the empty language. When combined with other combinators, \(\bot\) is
+   either an annihilator or the identity *(TODO: link to figure)*. This means
+   any \mre{} containing \(\bot\) is either semantically equivalent to \(\bot\),
+   or semantically equivalent to an \mre without \(\bot\).
+
+   In the current form, Nibble doesn't solve any of the problems with \mres{}.
+   The first step to solving the repetition issue is to introduce let
+   expressions. Listing [[lst:nibble-let-expression]] demonstrates how Nibble can
+   eliminate the simple repetition from [[fig:mu-hex-colour]].
+
+   #+label: lst:nibble-let-expression
+   #+name: lst:nibble-let-expression
+   #+caption: Nibble has let statements to introduce variables.
+   #+begin_src rust
+     let hex = "0"|"1"|"2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"
+             | "a"|"b"|"c"|"d"|"e"|"f"
+             | "A"|"B"|"C"|"D"|"E"|"F";
+     match "#".hex.hex.hex.hex.hex.hex.(_|hex.hex)
+   #+end_src
+
+   A let statement introduces a new variable name, the binding variable, and
+   assigns it a Nibble expression, the bound expression. In this case, the
+   variable ~hex~ is assigned to a hexadecimal character. The variable can be
+   used repeatedly in following statements.
+
+   *TODO: Is this too tangential for this section? Maybe the evaluation is a
+   better fit...*
+
+   Unlike BNF which, as we discussed in section [[*BNF]], has a mutually-recursive
+   global namespace, Nibble's let statements use non-recursive lexical scoping.
+   This means that a Nibble expression can only refer to variables in previous,
+   complete let statements. Listing [[lst:nibble-lexical-scope]] shows two invalid
+   variable uses.
+
+   #+label: lst:nibble-lexical-scope
+   #+name: lst:nibble-lexical-scope
+   #+caption: Two Nibble let statements that violate the lexical scoping rules
+   #+begin_src rust
+     // Forbidden because `second` is defined after `first`.
+     let first = "a" . second;
+     let second = "b";
+
+     // Forbidden because `rec` cannot refer to itself.
+     let rec = _ | "a".rec;
+   #+end_src
+
+   Whilst let statements can eliminate verbatim repetition, they do not help
+   with repetitive patterns, like we saw in figure [[fig:mu-many-plus]]. Nibble
+   introduces lambda abstractions, which are demonstrated in [[lst:nibble-lambda]].
+
+   #+label: lst:nibble-lambda
+   #+name: lst:nibble-lambda
+   #+caption: Nibble has lambda abstractions to eliminate repetitive patterns.
+   #+begin_src rust
+     let opt = /x/ _ | x;
+     let plus(x) = !(/y/ x.opt y);
+     match plus "a".plus "b".plus "c"
+   #+end_src
    
-** Nibble Type Systems
-   Nibble has two different type systems of different complexities. The
-   KY-\(\lambda\) type system is a minimal departure from the \(KY\) type
-   system, by reducing Nibble expressions to \mres. The LM type system works
-   directly on Nibble expressions. It is a modified Hindley-Milner type system,
-   introducing algebraic types and type constraints. 
+   There are two ways to introduce a lambda abstraction: either through a lambda
+   expression ~/x/ e~, or through a let-lambda statement ~let x(y) = e~.
 
-*** KY-\(\lambda\) Type System
-    KY-\(\lambda\) is a minimal type system for Nibble. Instead of type checking
-    Nibble expressions, it first performs reduction to get \mres{}, which it
-    then type checks using the KY type system. Under this system, let
-    expressions and lambda expressions are like parametric macros: a
-    substitution of expressions.
+   *TODO: move sugar to normalisation in section [[*The Front-End: Parsing and
+   Normalisation]]?*
 
-    An immediate benefit of this system is its simplicity. After performing the
-    relatively simple task of reduction, Chomp can then check expressions using
-    the already-developed KY type system.
+   The let-lambda statements are /syntactic sugar/ for a let-statement binding a
+   lambda-expression. They are indistinguishable in their semantics and how they
+   are type checked.
 
-    There are some problems with this system. Firstly, Nibble forms a superset
-    of the lambda calculus. Therefore reduction of expressions is
-    non-terminating. An example of such an is in listing [[lst:omega]]. This
-    can be mitigated by forbidding variables to appear in the function position
-    of an application expression. Even still, the size of expressions can
-    increase exponentially.
+   Notice how in line two, the fixed point operator ~!~ takes the lambda
+   expression as an argument. In general, the fixed point operator can accept
+   any expression than evaluates to a first-order function. Whilst not
+   demonstrated here, functions can take more than one argument. *TODO: Maybe
+   demonstrate instead.*
 
+   *TODO: summary?*
+** Type Systems for Nibble
+   I have designed two type systems for Nibble: \ky{}-\lambda and LM. The
+   \ky{}-\lambda type system is a minimal departure from the \ky{} type system
+   for \mres{}, which was presented in section [[*The \ky{} Type System]], treating
+   lambda abstractions as parametric macros. This is what is implemented in
+   Chomp. The LM type system is a theoretical system for Nibble, incorporating
+   ideas from the Hindley-Milner type system, introduced in section [[*The
+   Hindley-Milner Type System]]. This adds polymorphic function types on top of
+   the \ky{} type system.
+   
+*** The \ky{}-\lambda Type System
+    The \ky{}-\lambda type system is a type system for Nibble using the \ky{}
+    type system, presented in section [[*The \ky{} Type System]], as the core. By
+    treating lambda abstractions as parametric macros, Nibble expressions are
+    reduced into embedded \mres{} using substitution. This \mre{} is type
+    checked using the \ky{} type system.
+
+    For a Nibble expression ~e~, we denote the reduction of ~e~ as \( \llbracket
+    \mathtt{e} \rrbracket \). *Full definition is where?* To summarise,
+    reduction performs call-by-name evaluation of Nibble expressions. The only
+    exception is the fixed-point operator, ~!e~. This first reduces the argument
+    ~e~. If ~e~ reduces to ~/x/ f~, then ~f~ is reduced, keeping ~x~ free.
+    Otherwise, reduction fails.
+
+    *TODO: include examples*
+
+    There are some problems with this approach. Firstly, call-by-name evaluation
+    of untyped terms is non-terminating. Consider listing [[lst:omega]]. The
+    expression ~omega omega~ reduces to ~omega omega~. Users might be confused
+    by the parser generator hanging instead of producing an error.
+   
     #+label: lst:omega
     #+name: lst:omega
     #+caption: Non-reducing Nibble expression.
-    #+attr_latex: :centering
     #+begin_src rust
       let omega(x) = x x;
       match omega omega
     #+end_src
 
-    Secondly, a reduced expression can contain the same \mre{} multiple times.
-    This means a naive type checker will waste time on redundant computation.
-    This could be mitigated by including some form of caching.
+    Another issue is that unused expressions are completely ignored. Whilst this
+    has some computational benefits, it could cause confusion for users. *TODO:
+    example.*
 
-    Both of these problems can be resolved if types are applied directly to
-    Nibble expressions.
-*** LM Type System
-    The LM type system is a modified Hindley-Milner type system. Instead of
-    reducing Nibble expressions, they are type checked directly. This requires
-    algebraic base types, function types and parametric polymorphism.
+    Both of these issues can be resolved with a purely syntactic type system.
 
-    The Hindley-Milner type system uses the structure of expressions to infer
-    their types. Instead of treating \(\tau \cdot \tau\) and \(\tau \vee \tau\)
-    as operators, we use them as constructors. We also introduce
-    \( \mu \alpha. \tau \) as a type constructor.
-
-    Due to guarding rules, variables are treated differently depending on
-    whether they appear on the left or right of concatenation rules. This means
-    that for application expressions the way the function uses the variable
-    changes how the argument can be type checked. This is resolved by
-    introducing two function types -- \(\tau \to \tau\) and \(\tau \leadsto
-    \tau\) for when the formal parameter is used in an unguarded and guarded
-    context respectively.
-
-    In the KY type system, the concatenation and alternation rules included
-    constraints on types in their hypotheses. Because of the polymorphism
-    present in Hindley-Milner type systems, it is impossible to know when these
-    constraints are satisfied until the type variables are instantiated.
-    Instead, the LM defers checking these constraints by collecting them in the
-    conclusion of type rules. Polytypes must then carry with them the set of
-    constraints that any instances must satisfy.
-
-    We say an expression is well typed if the typing rules can assign it a type,
-    and all constraints are satisfied.
+*** The LM Type System
+    *TODO: reread carefully and simplify. This whole section assumes prior
+    knowledge readers won't have.*
     
-    Finally we consider type inference. Types in the KY type system form an
-    algebra. For example, \( \alpha \cdot \tau_\epsilon = \alpha \) for all
-    types \( \alpha \). Because of this algebraic nature, it is difficult to
-    determine whether two types are equal. For instance, do we have \( ((\alpha
-    \vee \beta) \cdot \gamma) \cdot \delta = (\alpha \cdot (\gamma \cdot
-    \delta)) \vee ((\beta \cdot \tau_\epsilon) \cdot (\gamma \cdot \delta))
-    \)[fn:: Yes]? Introducing fixed points only makes determining type equality
-    more difficult.
+    The LM type system is a purely-syntactic type system for Nibble. It combines
+    features of the Hindley-Milner type system discussed in section [[*The
+    Hindley-Milner Type System]] with the core of the \ky{} type system, presented
+    in section [[*The \ky{} Type System]]. This allows for expressions bound by let
+    statements to have polymorphic types, and removes the need to reduce
+    expressions before type checking.
 
-    Recall that unification takes two types and instantiates type variables
-    until they are equal. Given that equality is so complex, how can we unify
-    two variables efficiently? The solution is to only use structural equality
-    for unification. Whilst it will reject some otherwise well-typed Nibble
-    expressions, using structural equality should have a huge performance
-    benefit. In any case, for this small set of rejected expressions, there will
-    be a Nibble expression with an equivalent language.
-** Repository Overview
-   Table [[tbl:overview]] gives a brief description of the repository structure for
-   Chomp. The main Chomp library and binary are contained in the ~src~
-   directory. Other directories correspond to separate libraries and binaries
-   built around Chomp.
+    Unlike all previous type systems, the variable contexts store both types and
+    constraints. Constraints are relations between types in the \ky{} type
+    system. They need to be stored in the variable context because these
+    relations are not always decidable for type variables.
+    
+    The LM typing judgement has the form \( \Gamma; \Delta \vdash \mathtt{e} : \tau ; C
+    \). This can be read: under unguarded variable context \Gamma and guarded
+    context \Delta, the Nibble expression ~e~ has the type \tau given the
+    constraints in \(C\) hold. Thus, type checking an expression becomes a
+    two-step process: infer a type; then check the constraints hold.
+
+    Figure [[fig:lm-type-rules]] shows the typing rules for the LM type system. We
+    first talk through the various rules, before showing some example
+    inferences. Looking at those examples may help with understanding these
+    rules. 
+
+    #+label: fig:lm-type-rules
+    #+name: fig:lm-type-rules
+    #+caption: Typing rules for the LM type system
+    #+begin_figure
+    \centering
+    *TODO: some odd typesetting going on in here.*
+
+    *TODO: define bar and substitutions.*
+    
+    \begin{math}
+    \begin{array}{ccc}
+      \begin{prooftree}
+        \infer0{\Gamma; \Delta \vdash \mathtt{\_} : K(\tau_\epsilon); \emptyset}
+      \end{prooftree}
+      &&
+      \begin{prooftree}
+        \infer0{\Gamma; \Delta \vdash \mathtt{``cw"} : K(\tau_c); \emptyset}
+      \end{prooftree} \\
+      && \\
+      \begin{prooftree}
+        \hypo{\sigma = S\rho}
+        \hypo{C' = S C}
+        \infer2{\Gamma, x : (\rho, C); \Delta \vdash \mathtt{x} : \sigma; C'}
+      \end{prooftree}
+      && \\
+      && \\
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash \mathtt{e} : K(\tau); C}
+        \hypo{\Gamma, \Delta; \cdot \vdash \mathtt{e'} : K(\tau'); C'}
+        \infer2{\Gamma; \Delta \vdash \mathtt{e . e'} : K(\tau \cdot \tau'); C \cup C' \cup \{ \tau \circledast \tau' \}}
+      \end{prooftree}
+      &&
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash \mathtt{e} : K(\tau); C}
+        \hypo{\Gamma; \Delta \vdash \mathtt{e'} : K(\tau'); C'}
+        \infer2{\Gamma; \Delta \vdash \mathtt{e | e'} : K(\tau \vee \tau'); C \cup C' \cup \{ \tau \# \tau' \}}
+      \end{prooftree} \\
+      && \\
+      \begin{prooftree}
+        \hypo{\Gamma, x : (\sigma, \emptyset); \Delta \vdash \mathtt{e} : \sigma'; C}
+        \infer1{\Gamma; \Delta \vdash \mathtt{/x/ e} : \sigma \to \sigma'; C}
+      \end{prooftree}
+      &&
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta, x : (\sigma, \emptyset) \vdash \mathtt{e} : \sigma'; C}
+        \infer1{\Gamma; \Delta \vdash \mathtt{/x/ e} : \sigma \leadsto \sigma'; C}
+      \end{prooftree} \\
+      && \\
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash \mathtt{e} : \sigma \to \sigma'; C}
+        \hypo{\Gamma; \Delta \vdash \mathtt{e'} : \sigma; C'}
+        \infer2{\Gamma; \Delta \vdash \mathtt{e e'} : \sigma'; C \cup C'}
+      \end{prooftree}
+      &&
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash \mathtt{e} : \sigma \leadsto \sigma'; C}
+        \hypo{\Gamma, \Delta; \cdot \vdash \mathtt{e'} : \sigma; C'}
+        \infer2{\Gamma; \Delta \vdash \mathtt{e e'} : \sigma'; C \cup C'}
+      \end{prooftree} \\
+      && \\
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash \mathtt{e} : K(\tau) \leadsto K(\tau); C}
+        \infer1{\Gamma; \Delta \vdash \mathtt{!e} : K(\tau); C}
+      \end{prooftree}
+      &&
+      \begin{prooftree}
+        \hypo{\Gamma; \Delta \vdash \mathtt{e} : \sigma; C}
+        \hypo{\Gamma; \Delta, x: (\bar{\sigma}, \bar{C}) \vdash \mathtt{e'} : \sigma'; C'}
+        \infer2{\Gamma; \Delta \vdash \mathtt{let x = e; e'} : \sigma'; C'}
+      \end{prooftree} \\
+      && \\
+    \end{array}
+    \end{math}
+    #+end_figure
+
+    The epsilon and literal rules are the simplest LM typing rules, being
+    largely unchanged from the \ky{} type system. The only differences are that
+    the type is wrapped in a \(K\) constructor, and they both return an empty
+    set of constraints.
+
+    *TODO: wording*
+    
+    The variable rule is a combination of the rules from the Hindley-Milner and
+    \ky{} type systems. First, the variable must be unguarded. Second, the
+    output type is a specialisation of the type from the context. In addition to
+    specialising the type, we also specialise the constraints.
+
+    Concatenation and alternation remain similar to the \ky{} type system. Like
+    the epsilon and literal rules, all the types are wrapped in a \(K\)
+    constructor. Instead of the constraints appearing in the premise, as they do
+    in the \ky{} type system, they are moved to the conclusion, where they can
+    be checked later.
+
+    Notice how there are two different typing rules for lambda abstraction. This
+    is due to the two variable contexts from the \ky{} type system. One function
+    type is for unguarded functions, where the formal parameter can be used in
+    an unguarded context. The other function type is for guarded functions,
+    where the formal parameter can only be used in guarded contexts. Because
+    lambda expressions are monomorphic, type constraints pass straight through.
+
+    Again due to the presence of two function types, there are two typing rules
+    for application. If the called function is an unguarded function type, then
+    the argument is evaluated in the same context. If the function is a guarded
+    function, then the argument is evaluated in an unguarded context -- the
+    function body ensures the parameter only appears on the right side of a
+    concatenation, so all variables are accessible.
+
+    *TODO: add guard < unguard to the specialisation rules instead?*
+    
+    The subsumption rule allows guarded functions to be used when an unguarded
+    function was expected. This is safe due to an extension of the transfer
+    property of the \ky{} type system *(TODO: link to transfer)*. 
+
+    The fixed-point typing rule only accepts first-order guarded functions as
+    the argument. Whilst fixed-points could accept higher-order functions, doing
+    so would allow non-terminating reductions in Nibble. To prevent the
+    left-factoring problem, described in section [[*Left Factoring]], the function
+    must be guarded.
+
+    Let expressions are taken from the Hindley-Milner type system almost
+    directly. Note that bound variables are always unguarded. *Why?* This is also the
+    only typing rule that adds constraints to variables in the context. A
+    consequence of this typing rule is that constraints \(C\) on the bound
+    expression are only checked if ~x~ is used in the body.
+
+**** Examples
+     
+    *TODO: include examples, especially for function types*
+
+    *TODO: ~let bad(x) = "a" | "a"; match "b"~*
+    
+    *TODO: subsumption rule*
+       
+#     Finally we consider type inference. Types in the \ky{} type system form an
+#     algebra. For example, \( \alpha \cdot \tau_\epsilon = \alpha \) for all
+#     types \( \alpha \). Because of this algebraic nature, it is difficult to
+#     determine whether two types are equal. For instance, do we have \( ((\alpha
+#     \vee \beta) \cdot \gamma) \cdot \delta = (\alpha \cdot (\gamma \cdot
+#     \delta)) \vee ((\beta \cdot \tau_\epsilon) \cdot (\gamma \cdot \delta))
+#     \)[fn:: Yes]? Introducing fixed points only makes determining type equality
+#     more difficult.
+
+#     Recall that unification takes two types and instantiates type variables
+#     until they are equal. Given that equality is so complex, how can we unify
+#     two variables efficiently? The solution is to only use structural equality
+#     for unification. Whilst it will reject some otherwise well-typed Nibble
+#     expressions, using structural equality should have a huge performance
+#     benefit. In any case, for this small set of rejected expressions, there will
+#     be a Nibble expression with an equivalent language.
+** Chomp Repository Overview
+   Chomp is a parser generator from Nibble to Rust. Chomp is implemented in
+   Rust, so it can utilise the procedural macro system, described in section
+   [[*Procedural Macros]]. Table [[tbl:overview]] gives a brief description of the
+   repository structure for Chomp.
 
    #+label: tbl:overview
    #+name: tbl:overview
    #+caption: Brief outline of the code repository structure.
    #+attr_latex: :float t
-   | Path                   | Description                                              | Lines of Code |
-   |------------------------+----------------------------------------------------------+---------------|
-   | ~src/nibble~           | Nibble parser and normalisation                          |           676 |
-   | ~src/chomp~            | Chomp type inference algorithm                           |          1676 |
-   | ~src/lower~            | Chewed parser code generation                            |           420 |
-   | ~chewed~               | Shared library for all chewed parsers                    |           270 |
-   | ~chomp-macro/src~      | Procedural macro interface                               |            41 |
-   | ~chomp-macro/tests~    | Minimal end-to-end tests of Chomp                        |           123 |
-   | ~autochomp/src~        | AutoChomp -- Chomp using a chewed parser for parsing     |           570 |
-   | ~autochomp/bench~      | Performance comparison between Chomp and Autochomp       |           167 |
-   | ~chomp-bench/**/json~  | Performance comparison between various parsers for JSON  |           430 |
-   | ~chomp-bench/**/ascii~ | Performance comparison between various parsers for ASCII |           227 |
+   | Path                   | Description                             | Lines of Code |
+   |------------------------+-----------------------------------------+---------------|
+   | ~src/nibble~           | Nibble parser and normalisation         |           676 |
+   | ~src/chomp~            | Chomp type inference algorithm          |          1676 |
+   | ~src/lower~            | Chewed parser code generation           |           420 |
+   | ~chewed~               | Shared library for all chewed parsers   |           270 |
+   | ~chomp-macro/src~      | Procedural macro interface              |            41 |
+   | ~chomp-macro/tests~    | Minimal end-to-end tests of Chomp       |           123 |
+   | ~autochomp/src~        | AutoChomp implementation                |           570 |
+   | ~autochomp/tests~      | Tests for correctness of AutoChomp      |           ??? |
+   | ~autochomp/benches~    | Benchmarks of Chomp and AutoChomp       |           167 |
+   | ~chomp-bench/**/json~  | Benchmarks of various parsers for JSON  |           430 |
+   | ~chomp-bench/**/ascii~ | Benchmarks of various parsers for ASCII |           227 |
 
-   Rust was chosen as an implementation language for a variety of reasons.
-   First is the ownership, which is part of the Rust type system that ensures
-   data is stored in one place at a time. This has consequences for chewed
-   parsers. Once a character is taken from the input stream, there is no subtle
-   way to put it back without transferring ownership. In fact, the API in the
-   ~chewed~ library prevents this possibility.
-
-   Another reason Rust was chosen is the procedural macro system. This system
-   provides an easy way to integrate Chomp into the Rust build process. It is
-   discussed in more detail in section [[*Procedural Macros]].
-
-   Rust uses a highly optimising compiler. Whilst the algorithms used by chewed
-   parsers are simple, they include many nested method calls by design. The Rust
-   compiler performs optimisations which dramatically increases the performance
-   of these parsers without having to be clever with code generation.
-
-   Another useful feature of Rust is its exhaustive pattern matching. This is
-   relevant to Chomp in two ways. Inside of Chomp, exhaustive pattern matching
-   ensures all transformations are implemented for all Nibble expressions. For
-   the chewed parsers, the exhaustive pattern matching ensures that all possible
-   input characters have to be dealt with in a sane way; either continuing to
-   parse, or returning an error.
+   The ~src~ directory contains the main Chomp library. It is split into three
+   parts. The front end is in the ~src/nibble~ directory. This parses an input
+   stream of Nibble expressions and produces Chomp's IR, an abstract syntax
+   tree. The middle end is in the ~src/chomp~ directory. This performs type
+   inference using the \ky{}-\lambda type system. It outputs a typed \mre{}. The
+   back end is in the ~src/lower~ directory. Its responsible for converting the
+   typed \mre{} into Rust source code for a parser.
    
-** Core Generation Pipeline
-   Chomp has three main phases: parsing, type inference, and code generation.
-   Parsing takes an stream of input Nibble tokens for and produces an abstract
-   syntax tree (AST). Type inference analyses this AST and assigns each node a
-   type, or produces an error. If the root is given a type, the tree is
-   transformed into a typed syntax tree. Finally, the typed syntax tree is
-   converted into output Rust tokens for the chewed parser.
-
-*** Parsing
-    Chomp uses a parser framework called ~syn~. The parser takes a stream of
-    lexical tokens and produces a concrete parse tree. This is then converted
-    into an abstract syntax tree, which is used by the type inference stage.
-    
-    The parser was written by hand. Nibble is a small language, designed to be
-    easily parsed. This greatly simplifies the task of writing a parser for it.
-
-    *example: parsing concatenation?*
-
-    After parsing to the concrete syntax tree, the input stage then normalises
-    it to an AST. This has two parts, which occur concurrently. One is
-    desugaring, which is the elimination of syntactic shortcuts; and the other
-    is introduction of De Bruijn indices, which is a way of naming variables.
-
-    Syntactic sugar is part of a language that doesn't add any expressive power,
-    and only makes it easier to read. For example, the Nibble expression ~let
-    opt(x) = _|x; ...~ is semantically equivalent to ~let opt = /x/ _|x; ...~.
-    The let-combinator syntax is redundant, but makes it easier to determine if
-    a let expression is a combinator or a full language description. Desugaring
-    expands all the syntactic sugar into the base expressions.
-
-    *TODO: segue.*
-    In lexically-scoped languages, variable bindings form a stack. Take the
-    Nibble expression ~/x/ (/y/ y x) (/z/ z)~. ~x~ is bound first, then ~y~ is
-    bound and unbound, and finally ~z~ is bound and unbound. Also note that the
-    names of variables have little impact.
-
-    Making use of these two observations, we can arrive at De Bruijn indices,
-    where variables are referenced by their position from the top of the stack.
-    Using the previous example, the expression becomes ~// (// 0 1) (// 0)~.
-    This helps improve the efficiency of later compilation stages, as well as
-    spotting usage of undeclared variables early.
-
-    *algorthim: normalisation in practice*
-*** Type Inference
-    Type inference takes an AST and produces a typed syntax tree, by assigning
-    every node a type. This section starts with a discussion about where type
-    annotations are stored. Next, it describes the visitor pattern used in the
-    type inference algorithm. Finally, it details the design of the variable
-    context used during type checking.
-
-    There are generally two ways to annotate a tree with types. Internal
-    annotations define a new tree type with almost identical structure to the
-    AST. The only difference is that every node also stores type information.
-    External annotations provide an external function to find the type of a
-    node, without modifying the original data structure at all.
-
-    *Why does Chomp use internal annotations?*
-    
-    # Chomp uses internal annotations for a few reasons. Firstly, anyone should be
-    # able to create and modify an AST but only some languages should have typed
-    # syntax trees. By using two separate types, ASTs can have public
-    # constructors and typed syntax trees can have private constructors.
-
-    # Secondly, 
-
-    # Secondly, *usage in code generation.*
-
-    Type inference is performed using the visitor pattern. This pattern is
-    depicted in figure [[fig:visitor]]. A visitor has different methods each
-    accepting a different type of expression. An expression has a method that
-    takes a visitor and dispatches the call for the correct expression type.
-
-    #+label: fig:visitor
-    #+name: fig:visitor
-    #+caption: UML diagram showing the visitor pattern.
-    #+begin_figure
-    *TODO: finish figure*
-    #+end_figure
-
-    The visitor design pattern keeps the code for each visitor in one location,
-    instead of split across all the different expression types. This is
-    particularly important for reduction, which was also implemented using
-    the visitor pattern. Reduction requires many recursive manipulations of the
-    expression tree. Keeping each stage separate helps to verify the correctness
-    over the whole tree.
-
-    The visitor pattern also provides external users of Chomp an interface to
-    include their own manipulations. It can also help if Chomp is split into
-    three libraries for the front-end, middle-end and back-end.
-
-    *application: visitor pattern for substitution?*
-
-    Finally there is the variable context. The LM type system splits the
-    variable context into two parts: an unguarded context and a guarded context.
-    To further complicate things, some variables move back and forward between
-    the unguarded and guarded contexts, whilst others are always unguarded. 
-
-    *TODO: rewrite to describe what's implemented*
-    
-    # Listing [[lst:var-context]] shows the data structure and API I used to solve all
-    # these problems. At its core, a ~Context~ is a wrapper for ~vars~, a vector
-    # of types. These types are either ~Dynamic~, going between guarded and
-    # unguarded, or ~Static~, remaining always unguarded.
-
-    # #+label: lst:var-context
-    # #+name: lst:var-context
-    # #+caption: Variable context structure and API.
-    # #+begin_src rust
-    # *TODO: finish figure*
-    # #+end_src
-
-    # To determine whether a ~Dynamic~ type is guarded requires looking at
-    # ~unguard_points~. This is a separate stack, recording the length of ~vars~
-    # when it was last unguarded. If a variable is deeper in the stack then the
-    # last index in ~unguard_points~, it is unguarded. Otherwise, it is only
-    # unguarded if it is ~Static~.
-
-    # *TODO: proof read. Very fumbly*
-    
-    # There are four main functions in the API for ~Context~. ~get_variable_type~
-    # is a fallible way of retrieving a variable, returning an error if the
-    # desired variable is guarded. ~with_unguard~, ~with_unguarded_type~ and
-    # ~with_guarded_type~ unguard the context, introduce a new unguarded type and
-    # introduce a new guarded type respectively. Each of them takes a function
-    # argument. Due to the nature of stacks, each one pushes a value, calls the
-    # supplied function, and then pops the value before returning the result.
-    # Because Rust is an optimising compiler, it is likely each of these calls
-    # will be fully inlined, resulting in no size increase to the call stack.
-    
-*** Code Generation
-    Code generation transforms a typed syntax tree into Rust tokens describing a
-    parser. This requires tree parts: translation, type generation and parser
-    implementation. First, the tree is translated into an \mre{}. This avoids
-    the problem of representing functions as data types. Type generation defines
-    all the data types produced by the parser. By using Rust's zero-sized types,
-    it is possible to achieve very small storage footprints whilst using rich
-    types. The implementation describes how to parse each data type. Rust's
-    trait system aids this process.
-
-    Ideally, the translation step would be unnecessary. Instead, Rust's generics
-    would allow parametric data types and parser implementations. There are two
-    practical problems with this. First, generic type arguments cannot be given
-    their own type arguments. Consider the function ~/f/ f "a"~. Ideally, this
-    would have the datatype declaration ~type Foo<F> = F<A>;~. Unfortunately,
-    the Rust compiler rejects the type argument ~<A>~ on ~F~. Secondly, generic
-    type arguments cannot provide compile-time constants to the generic type.
-    Consider the alternation ~"a"|"b"~. To get the full performance benefit of
-    type-checked parser combinators, the branching conditions, i.e. the first
-    sets, for each alternative need to be known at compile time. For a generic
-    implementation ~Alt<A, B>~, there is no way to get this information as a
-    compile-time constant.
-
-    *TODO: talk about other alternatives?*
-    
-    Recall reduction used by the KY-\lambda type system, in section
-    [[*KY-\(\lambda\) Type System]]. There, reduction stopped when the top-level
-    expression was not a let expression or lambda expression. Translation
-    instead continues the reduction process until the result has no more lambda
-    expressions, let expressions, or function calls. The resulting expression
-    can be trivially translated into a \mre{}, as every other component of
-    Nibble expressions has a corresponding component in \mres{}. *example*
-    
-    One downside of this approach is that it creates significantly more code
-    than generics would. This could increase the compilation time of the chewed
-    parser. Naming types also becomes more challenging. Every instance of a
-    *let-lambda* expression creates a new datatype, that all want the same name.
-    Chomp solves this by adding a unique number to the end of each type. This
-    can make discovering the correct type to use more difficult that generics
-    would.
-
-    *Segue.*
-    A zero-sized type is a data type that has exactly one instance. For example,
-    the unit type ~()~ is zero-sized. Because there is only a single instance, a
-    value of a zero-sized type has no information. This means the Rust compiler
-    does not need to store values of this type, reducing the memory footprint of
-    various data structures. Chomp exploits zero-sized types by translating
-    epsilon expressions and literal expressions into zero-sized types. The
-    language of an epsilon statement is the empty string, so it only has one
-    instance. Similarly, each literal string can be parsed in exactly one way,
-    so they also only have one instance. This means literal strings and epsilon
-    statements require no storage in the final parse tree.
-
-    Concatenation expressions are translated into structures -- records of
-    fields. Whilst the KY type system uses binary concatenation, Nibble uses
-    \(n\)-ary concatenation, to match real-world usage. *Example.* 
-
-    Alternation expressions are translated into enumerated types. Similar to
-    concatenation, the generated enumerations are \(n\)-ary instead of binary.
-    From experience gained writing various tests, it is much more pleasant for
-    the user to only consider one, large alternation than many small nested
-    ones. *Example*
-
-    *TODO: relevance?* 
-    
-    By default, Rust stores all values on the stack. The size of values on the
-    stack must be known at compile time, so the compiler can allocate enough
-    space for them. These two facts mean that Rust does not allow
-    directly-recursive data types. *Example: linked list.* This list could store
-    zero, one, or more items on the stack, each giving a value with a different
-    size. To allow recursion, a recursive reference has to be indirect, for
-    example with an owned heap-reference like ~Box~.
-
-    *TODO: describe as implemented*
+   The output of Chomp is called a /chewed parser/. All these parsers share some
+   common code, such as the trait definition (introduced in section [[*Traits]]) for
+   a parser. This common code is kept in the ~chewed~ library. The reason it
+   forms a separate library is so that consumers of Chomp only need to include
+   the small ~chewed~ library with their final binary, instead of the relatively
+   large Chomp library.
    
-    Now we know how Nibble expressions are converted into data types. Next we
-    explore how they are parsed.
-
-    Listing [[lst:parse-def]] gives the core of the definition of the ~Parse~ trait,
-    used to parse streams of characters into the data types we made earlier.
-    ~take~ removes characters from the stream to produce an instance of the
-    type, until the next character is not in the first set of the expression's
-    type. For instance, the ~take~ method for epsilon expressions always
-    succeeds, leaving the stream alone. The ~take~ method for literal
-    expressions succeeds if and only if the stream starts with that literal
-    string. *example*.
-
-    #+label: lst:parse-def
-    #+name: lst:parse-def
-    #+caption: ~Parse~ trait definition
-    #+begin_src rust
-      fixme!()
-    #+end_src
-
-    Because the expression is well-typed, we know that any fixed-point recursion
-    is guarded. Therefore fixed-point recursion is unchecked. Likewise, because
-    first and flast sets are disjoint for concatenation expressions, the prefix
-    can greedily take characters from the stream before the suffix does. For
-    alternations, we know that the first sets for each alternative are disjoint,
-    so we can easily chose which alternative to parse.
-
-    *example: generated code.*
-
-** Procedural Macros
-   Procedural macros are compile-time procedures that operate over Rust tokens.
-   They let users perform arbitrary transformations to Rust tokens. This can be
-   used for mundane cases, like creating debugging information, to exotic, such
-   as embedding Nibble in Rust code.
-
-   Tokens used in Nibble are a subset of tokens used in Rust. This design choice
-   means that Chomp could be used as a procedural macro -- it takes Rust
-   (Nibble) tokens and produces a different stream of Rust tokens. Integrating
-   Nibble into other projects then becomes simple: declare that the project uses
-   Chomp, include the ~chewed~ library, write some Nibble in a macro, and then
-   enjoy the chewed parser.
+   To help make Chomp easier for developers to include in their projects, a
+   procedural macro interface was created. Due to current limitations in Rust,
+   this interface has its own, small library in the ~chomp-macro~ directory.
+   This library also includes a few basic end-to-end tests for Chomp.
    
-   *STORY: I'm not sure what I want to say here.*
+   The success criterion for this project required bootstrapping Chomp --
+   replacing the original front-end with a chewed parser. This variant of Chomp,
+   dubbed /AutoChomp/, is in the ~autochomp~ directory. This directory includes
+   some simple tests of the correctness of AutoChomp, as well as some benchmarks
+   to compare the relative performance of the handwritten and chewed parsers.
+   
+   Finally, there is the ~chomp-bench~ directory. This is a small library for
+   comparing the performance of chewed parsers against a handwritten and a
+   different generated parser. Ideally, this library would be part of
+   ~chomp-macro~. However, limitations in the build system for the other
+   generated parser makes this impossible.
+** The Front-End: Parsing and Normalisation
+   The front-end of Chomp is responsible for converting the input stream of
+   characters representing a Nibble expression into Chomp's IR. This occurs in
+   three stages. The first is lexing, where characters in the input stream are
+   split into different tokens. The second is parsing, where this token stream
+   is transformed into a concrete syntax tree. Finally, normalisation converts
+   this concrete syntax tree into an abstract syntax tree.
+   
+   In Chomp, the lexing is performed by the ~syn~ library. This can convert
+   streams of characters into tokens from the Rust language. Nibble uses a
+   subset of the tokens found in Rust, so lexing into Rust tokens makes the
+   parser simpler. It also makes integration with procedural macros
+   significantly easier, because procedural macros receive a stream of Rust
+   tokens as input. *TODO: link back to procedural macros?*
+   
+   The parser in Chomp also uses the ~syn~ library. It provides lightweight
+   interface to parse some often-used data structures. For example, it provides
+   the ~Punctuated<T, P>~ type, which represents a list of values of type ~T~,
+   separated by values of type ~P~. *TODO: discuss more interesting parsing.*
+   
+   Listing [[lst:parse-term]] shows how Chomp parses a Nibble term. This function
+   makes use of Rust's type inference and trait systems to call one of four
+   different functions, all written as ~input.parse()~. By checking what the
+   next input token is, it is possible to determine exactly what type of term
+   can appear.
+   
+   #+label: lst:parse-term
+   #+name: lst:parse-term
+   #+caption: Code snippet from Chomp that parses a Nibble term.
+   #+begin_src rust
+     pub enum Term {
+         Epsilon(Epsilon),
+         Ident(Ident),
+         Literal(Literal),
+         Fix(Fix),
+         Parens(ParenExpression),
+     }
 
-   One key requirement for Nibble was that it can describe itself. The easiest
-   way to test this was to replace the parser in Chomp with a chewed parser.
+     impl Parse for Term {
+         fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
+             let lookahead = input.lookahead1();
+
+             if lookahead.peek(Token![_]) {
+                 input.parse().map(Self::Epsilon)
+             } else if lookahead.peek(LitStr) {
+                 input.parse().map(Self::Literal)
+             } else if lookahead.peek(Token![!]) {
+                 input.parse().map(Self::Fix)
+             } else if lookahead.peek(Paren) {
+                 input.parse().map(Self::Parens)
+             } else if lookahead.peek(Ident::peek_any) {
+                 input.call(Ident::parse_any).map(Self::Ident)
+             } else {
+                 Err(lookahead.error())
+             }
+         }
+     }
+   #+end_src
+   
+   Finally there is normalisation. This converts the concrete syntax tree into
+   an abstract syntax tree. This occurs in two stages that occur simultaneously.
+   First, syntactic sugar is expanded. Second, variable names are converted to
+   De Bruijn indices (introduced in section [[*De Bruijn Indices]]).
+   
+   In section [[*The Nibble Language]], we introduced let-lambda statements as
+   syntactic sugar for a let statement binding a lambda expression. During
+   normalisation, we convert let-lambda statements into this expanded form,
+   instead of keeping them around as another node type in the abstract syntax
+   tree. This reduces complexity in later stages of Chomp.
+   
+   The other part of normalisation is conversion to De Bruijn indices. Most of
+   this work is achieved by the ~Context~ struct, shown in listing
+   [[lst:parse-ctx]].
+   
+   #+label: lst:parse-ctx
+   #+name: lst:parse-ctx
+   #+caption: Code snippet from Chomp that provides conversion to De Bruijn indices.
+   #+begin_src rust
+     pub struct Context {
+         bindings: Vec<Name>,
+     }
+
+     impl Context {
+         /// Get the De Bruijn index of `name`, if it is defined.
+         pub fn lookup(&self, name: &Name) -> Option<usize> {
+             self.bindings
+                 .iter()
+                 .rev()
+                 .enumerate()
+                 .find(|(_, n)| *n == name)
+                 .map(|(idx, _)| idx)
+         }
+
+         /// Permanently add the variable `name` to the top of the stack.
+         pub fn push_variable(&mut self, name: Name) {
+             self.bindings.push(name);
+         }
+
+         /// Call `f` with the variable `name` pushed to the top of the stack.
+         pub fn with_variable<F: FnOnce(&mut Self) -> R, R>(
+             &mut self, 
+             name: Name, 
+             f: F,
+         ) -> R {
+             self.bindings.push(name);
+             let res = f(self);
+             self.bindings.pop();
+             res
+         }
+     }
+   #+end_src
+   
+   As discussed in section [[*De Bruijn Indices]], when we introduced De Bruijn
+   indices, variables in lexically-scoped languages form a stack. The
+   most-recently declared variable is at the top of the stack. New variables are
+   pushed on top of the stack, and popped off when they leave scope.
+   
+   There are two ways to introduce variables in Nibble. The binding variables
+   from let statements are in scope for the rest of the Nibble expression. The
+   formal parameters of lambda expressions are in scope only for the body of the
+   lambda expression. This is reflected by the two different ways to push
+   variables to the stack.
+   
+   ~push_variable~ adds a variable onto the stack of ~bindings~ in a ~Context~
+   permanently. The API provides no way to remove variables. This is called
+   by let statements, after converting the bound expression but before
+   converting their body. The ~with_variable~ method pushes a variable onto the
+   stack only for the duration of a call to the function ~f~. This is used by
+   lambda expressions, where ~f~ will convert the lambda body.
+   
+   The ~lookup~ method does all of the heavy-lifting. *TODO: explain how.*
+
+** The Middle-End: Type Inference
+   The middle end of Chomp performs type inference using the \ky{}-\lambda type
+   system, to produce a typed \mre{}. First, the abstract syntax tree computed
+   by the front-end is reduced. Next, its type is inferred using the \ky{} type
+   system, and the output expression is built.
+   
+   Both reduction and the type inference algorithm use the visitor design
+   pattern. *TODO: explain the visitor pattern.*
+   
+   Recall from section [[*The \ky{}-\lambda Type System]] how reduction of Nibble is
+   essentially call-by-name evaluation. The reduction process can be simplified
+   to three steps: find a function call; substitute in the unreduced arguments;
+   reduce the result. A single visitor, called ~Reduce~, can both find function
+   calls and reduce the results. Substitution requires a different visitor,
+   which searches for the relevant variable and replaces it with the target
+   expression. Care needs to be taken when passing through a lambda expression
+   to rename free variables correctly. This can be done with a third Visitor.
+** The Back-End: Code Generation
+
+# *** Parsing
+#     Chomp uses a parser framework called ~syn~. The parser takes a stream of
+#     lexical tokens and produces a concrete parse tree. This is then converted
+#     into an abstract syntax tree, which is used by the type inference stage.
+    
+#     The parser was written by hand. Nibble is a small language, designed to be
+#     easily parsed. This greatly simplifies the task of writing a parser for it.
+
+#     *example: parsing concatenation?*
+
+#     After parsing to the concrete syntax tree, the input stage then normalises
+#     it to an AST. This has two parts, which occur concurrently. One is
+#     desugaring, which is the elimination of syntactic shortcuts; and the other
+#     is introduction of De Bruijn indices, which is a way of naming variables.
+
+#     Syntactic sugar is part of a language that doesn't add any expressive power,
+#     and only makes it easier to read. For example, the Nibble expression ~let
+#     opt(x) = _|x; ...~ is semantically equivalent to ~let opt = /x/ _|x; ...~.
+#     The let-combinator syntax is redundant, but makes it easier to determine if
+#     a let expression is a combinator or a full language description. Desugaring
+#     expands all the syntactic sugar into the base expressions.
+
+#     *TODO: segue.*
+#     In lexically-scoped languages, variable bindings form a stack. Take the
+#     Nibble expression ~/x/ (/y/ y x) (/z/ z)~. ~x~ is bound first, then ~y~ is
+#     bound and unbound, and finally ~z~ is bound and unbound. Also note that the
+#     names of variables have little impact.
+
+#     Making use of these two observations, we can arrive at De Bruijn indices,
+#     where variables are referenced by their position from the top of the stack.
+#     Using the previous example, the expression becomes ~// (// 0 1) (// 0)~.
+#     This helps improve the efficiency of later compilation stages, as well as
+#     spotting usage of undeclared variables early.
+
+#     *algorthim: normalisation in practice*
+# *** Type Inference
+#     Type inference takes an AST and produces a typed syntax tree, by assigning
+#     every node a type. This section starts with a discussion about where type
+#     annotations are stored. Next, it describes the visitor pattern used in the
+#     type inference algorithm. Finally, it details the design of the variable
+#     context used during type checking.
+
+#     There are generally two ways to annotate a tree with types. Internal
+#     annotations define a new tree type with almost identical structure to the
+#     AST. The only difference is that every node also stores type information.
+#     External annotations provide an external function to find the type of a
+#     node, without modifying the original data structure at all.
+
+#     *Why does Chomp use internal annotations?*
+    
+#     # Chomp uses internal annotations for a few reasons. Firstly, anyone should be
+#     # able to create and modify an AST but only some languages should have typed
+#     # syntax trees. By using two separate types, ASTs can have public
+#     # constructors and typed syntax trees can have private constructors.
+
+#     # Secondly, 
+
+#     # Secondly, *usage in code generation.*
+
+#     Type inference is performed using the visitor pattern. This pattern is
+#     depicted in figure [[fig:visitor]]. A visitor has different methods each
+#     accepting a different type of expression. An expression has a method that
+#     takes a visitor and dispatches the call for the correct expression type.
+
+#     #+label: fig:visitor
+#     #+name: fig:visitor
+#     #+caption: UML diagram showing the visitor pattern.
+#     #+begin_figure
+#     *TODO: finish figure*
+#     #+end_figure
+
+#     The visitor design pattern keeps the code for each visitor in one location,
+#     instead of split across all the different expression types. This is
+#     particularly important for reduction, which was also implemented using
+#     the visitor pattern. Reduction requires many recursive manipulations of the
+#     expression tree. Keeping each stage separate helps to verify the correctness
+#     over the whole tree.
+
+#     The visitor pattern also provides external users of Chomp an interface to
+#     include their own manipulations. It can also help if Chomp is split into
+#     three libraries for the front-end, middle-end and back-end.
+
+#     *application: visitor pattern for substitution?*
+
+#     Finally there is the variable context. The LM type system splits the
+#     variable context into two parts: an unguarded context and a guarded context.
+#     To further complicate things, some variables move back and forward between
+#     the unguarded and guarded contexts, whilst others are always unguarded. 
+
+#     *TODO: rewrite to describe what's implemented*
+    
+#     # Listing [[lst:var-context]] shows the data structure and API I used to solve all
+#     # these problems. At its core, a ~Context~ is a wrapper for ~vars~, a vector
+#     # of types. These types are either ~Dynamic~, going between guarded and
+#     # unguarded, or ~Static~, remaining always unguarded.
+
+#     # #+label: lst:var-context
+#     # #+name: lst:var-context
+#     # #+caption: Variable context structure and API.
+#     # #+begin_src rust
+#     # *TODO: finish figure*
+#     # #+end_src
+
+#     # To determine whether a ~Dynamic~ type is guarded requires looking at
+#     # ~unguard_points~. This is a separate stack, recording the length of ~vars~
+#     # when it was last unguarded. If a variable is deeper in the stack then the
+#     # last index in ~unguard_points~, it is unguarded. Otherwise, it is only
+#     # unguarded if it is ~Static~.
+
+#     # *TODO: proof read. Very fumbly*
+    
+#     # There are four main functions in the API for ~Context~. ~get_variable_type~
+#     # is a fallible way of retrieving a variable, returning an error if the
+#     # desired variable is guarded. ~with_unguard~, ~with_unguarded_type~ and
+#     # ~with_guarded_type~ unguard the context, introduce a new unguarded type and
+#     # introduce a new guarded type respectively. Each of them takes a function
+#     # argument. Due to the nature of stacks, each one pushes a value, calls the
+#     # supplied function, and then pops the value before returning the result.
+#     # Because Rust is an optimising compiler, it is likely each of these calls
+#     # will be fully inlined, resulting in no size increase to the call stack.
+    
+# *** Code Generation
+#     Code generation transforms a typed syntax tree into Rust tokens describing a
+#     parser. This requires tree parts: translation, type generation and parser
+#     implementation. First, the tree is translated into an \mre{}. This avoids
+#     the problem of representing functions as data types. Type generation defines
+#     all the data types produced by the parser. By using Rust's zero-sized types,
+#     it is possible to achieve very small storage footprints whilst using rich
+#     types. The implementation describes how to parse each data type. Rust's
+#     trait system aids this process.
+
+#     Ideally, the translation step would be unnecessary. Instead, Rust's generics
+#     would allow parametric data types and parser implementations. There are two
+#     practical problems with this. First, generic type arguments cannot be given
+#     their own type arguments. Consider the function ~/f/ f "a"~. Ideally, this
+#     would have the datatype declaration ~type Foo<F> = F<A>;~. Unfortunately,
+#     the Rust compiler rejects the type argument ~<A>~ on ~F~. Secondly, generic
+#     type arguments cannot provide compile-time constants to the generic type.
+#     Consider the alternation ~"a"|"b"~. To get the full performance benefit of
+#     type-checked parser combinators, the branching conditions, i.e. the first
+#     sets, for each alternative need to be known at compile time. For a generic
+#     implementation ~Alt<A, B>~, there is no way to get this information as a
+#     compile-time constant.
+
+#     *TODO: talk about other alternatives?*
+    
+#     Recall reduction used by the \ky{}-\lambda type system, in section
+#     [[*\ky{}-\(\lambda\) Type System]]. There, reduction stopped when the top-level
+#     expression was not a let expression or lambda expression. Translation
+#     instead continues the reduction process until the result has no more lambda
+#     expressions, let expressions, or function calls. The resulting expression
+#     can be trivially translated into a \mre{}, as every other component of
+#     Nibble expressions has a corresponding component in \mres{}. *example*
+    
+#     One downside of this approach is that it creates significantly more code
+#     than generics would. This could increase the compilation time of the chewed
+#     parser. Naming types also becomes more challenging. Every instance of a
+#     *let-lambda* expression creates a new datatype, that all want the same name.
+#     Chomp solves this by adding a unique number to the end of each type. This
+#     can make discovering the correct type to use more difficult that generics
+#     would.
+
+#     *Segue.*
+#     A zero-sized type is a data type that has exactly one instance. For example,
+#     the unit type ~()~ is zero-sized. Because there is only a single instance, a
+#     value of a zero-sized type has no information. This means the Rust compiler
+#     does not need to store values of this type, reducing the memory footprint of
+#     various data structures. Chomp exploits zero-sized types by translating
+#     epsilon expressions and literal expressions into zero-sized types. The
+#     language of an epsilon statement is the empty string, so it only has one
+#     instance. Similarly, each literal string can be parsed in exactly one way,
+#     so they also only have one instance. This means literal strings and epsilon
+#     statements require no storage in the final parse tree.
+
+#     Concatenation expressions are translated into structures -- records of
+#     fields. Whilst the \ky{} type system uses binary concatenation, Nibble uses
+#     \(n\)-ary concatenation, to match real-world usage. *Example.* 
+
+#     Alternation expressions are translated into enumerated types. Similar to
+#     concatenation, the generated enumerations are \(n\)-ary instead of binary.
+#     From experience gained writing various tests, it is much more pleasant for
+#     the user to only consider one, large alternation than many small nested
+#     ones. *Example*
+
+#     *TODO: relevance?* 
+    
+#     By default, Rust stores all values on the stack. The size of values on the
+#     stack must be known at compile time, so the compiler can allocate enough
+#     space for them. These two facts mean that Rust does not allow
+#     directly-recursive data types. *Example: linked list.* This list could store
+#     zero, one, or more items on the stack, each giving a value with a different
+#     size. To allow recursion, a recursive reference has to be indirect, for
+#     example with an owned heap-reference like ~Box~.
+
+#     *TODO: describe as implemented*
+   
+#     Now we know how Nibble expressions are converted into data types. Next we
+#     explore how they are parsed.
+
+#     Listing [[lst:parse-def]] gives the core of the definition of the ~Parse~ trait,
+#     used to parse streams of characters into the data types we made earlier.
+#     ~take~ removes characters from the stream to produce an instance of the
+#     type, until the next character is not in the first set of the expression's
+#     type. For instance, the ~take~ method for epsilon expressions always
+#     succeeds, leaving the stream alone. The ~take~ method for literal
+#     expressions succeeds if and only if the stream starts with that literal
+#     string. *example*.
+
+#     #+label: lst:parse-def
+#     #+name: lst:parse-def
+#     #+caption: ~Parse~ trait definition
+#     #+begin_src rust
+#       fixme!()
+#     #+end_src
+
+#     Because the expression is well-typed, we know that any fixed-point recursion
+#     is guarded. Therefore fixed-point recursion is unchecked. Likewise, because
+#     first and flast sets are disjoint for concatenation expressions, the prefix
+#     can greedily take characters from the stream before the suffix does. For
+#     alternations, we know that the first sets for each alternative are disjoint,
+#     so we can easily chose which alternative to parse.
+
+#     *example: generated code.*
+
+# ** Procedural Macros
+#    Procedural macros are compile-time procedures that operate over Rust tokens.
+#    They let users perform arbitrary transformations to Rust tokens. This can be
+#    used for mundane cases, like creating debugging information, to exotic, such
+#    as embedding Nibble in Rust code.
+
+#    Tokens used in Nibble are a subset of tokens used in Rust. This design choice
+#    means that Chomp could be used as a procedural macro -- it takes Rust
+#    (Nibble) tokens and produces a different stream of Rust tokens. Integrating
+#    Nibble into other projects then becomes simple: declare that the project uses
+#    Chomp, include the ~chewed~ library, write some Nibble in a macro, and then
+#    enjoy the chewed parser.
+   
+#    *STORY: I'm not sure what I want to say here.*
+
+#    One key requirement for Nibble was that it can describe itself. The easiest
+#    way to test this was to replace the parser in Chomp with a chewed parser.
 * Evaluation
   This section starts by discussing whether the project fulfilled the original
   requirements. Next, we perform qualitative analysis of Nibble, such as
@@ -1145,7 +1443,7 @@ list-of-figures:nil
 
    Secondly, Chomp accepts this self-description of Nibble and produces a chewed
    parser. That Chomp produces this parser, called /AutoNibble/, means that
-   Nibble is well-typed in the KY-\lambda type system. Hence, Nibble is
+   Nibble is well-typed in the \ky{}-\lambda type system. Hence, Nibble is
    unambiguous and can be parsed efficiently.
 
    Third, Chomp can be modified to use AutoNibble in the parsing stage. The
@@ -1169,11 +1467,11 @@ list-of-figures:nil
    untyped and typed applications.
 
 *** Comparison with \mu-Regular Expressions
-    In section [[*Syntax of Nibble]], I describe how to translate Nibble expressions
-    into \mres{}. This translation is surjective for \mres{} that do not include
-    \(\bot\) -- all \mre{} syntax, except for \(\bot\), has an equivalent in
-    Nibble. In fact, all \mres{} either express the empty language, or there is
-    a Nibble expression with the same language.
+    In section [[*The Nibble Language]], I describe how to translate Nibble
+    expressions into \mres{}. This translation is surjective for \mres{} that do
+    not include \(\bot\) -- all \mre{} syntax, except for \(\bot\), has an
+    equivalent in Nibble. In fact, all \mres{} either express the empty
+    language, or there is a Nibble expression with the same language.
     
     I will use three criteria to compare how practical a programming language
     is. One programming language is more practical than another if: there is
@@ -1184,9 +1482,9 @@ list-of-figures:nil
     problems they want to.
 
     Nibble is less repetitive than \mres{}, because common subexpressions can be
-    extracted into let expressions. This is demonstrated back in figure
-    [[fig:nibble-vs-mu]]. *Point out particular expression.* Let expressions also
-    make Nibble syntax more descriptive than \mres{}. Labels also allow parts of
+    extracted into let expressions. This is demonstrated back in figure (*TODO:
+    other figure*). *Point out particular expression.* Let expressions also make
+    Nibble syntax more descriptive than \mres{}. Labels also allow parts of
     expressions to be given descriptive names inline. Finally, the abstraction
     from let expressions and lambda expressions reduces the cognitive load of
     Nibble compared to \mres{}.
@@ -1203,9 +1501,8 @@ list-of-figures:nil
     only have alternatives at the top level. This means that the BNF declaration
     for the Nibble expression ~match x.("b"|"c").x~ would have to double the
     number of occurrences of ~x~. BNF also has no equivalent for the lambda
-    expressions found in Nibble. Going back to figure [[fig:nibble-vs-mu]], whilst
-    Nibble can invoke the ~list~ expression twice, BNF has to fully expand it
-    twice.
+    expressions found in Nibble. Going back to (*TODO: figure*), whilst Nibble
+    can invoke the ~list~ expression twice, BNF has to fully expand it twice.
 
     *TODO: descriptive.*
 
@@ -1385,11 +1682,11 @@ list-of-figures:nil
 *** Chewed Parser Performance
     Figures [[fig:bench-json]] and [[fig:bench-arith]] compare the performance of chewed
     parsers against handwritten and other generated parsers for two different
-    languages, JSON and arithmetic. For JSON, the parsers were made to output
-    a Rust representation of the object. For arithmetic, the parsers computed
-    the final value of the expression. These extra steps emulate using the
-    parsers in practice -- the target data type is fixed, but a developer can
-    choose how to arrive there. 
+    languages, JSON and arithmetic. For JSON, the parsers were made to output a
+    Rust representation of the object. For arithmetic, the parsers computed the
+    final value of the expression. These extra steps emulate using the parsers
+    in practice -- the target data type is fixed, but a developer can choose how
+    to arrive there.
 
     #+label: fig:bench-json
     #+name: fig:bench-json
@@ -1424,9 +1721,9 @@ list-of-figures:nil
   parser generators. I also designed the LM type system, which can assign
   polymorphic function types to Nibble expressions.
   
-  Chewed parsers have performance comparable to other generated parsers
-  (section [[*Quantitative]]) and, unlike ordinary parser combinators, come
-  with a compile-time guarantee of linear performance (section [[*AutoNibble]]).
+  Chewed parsers have performance comparable to other generated parsers (section
+  [[*Quantitative]]) and, unlike ordinary parser combinators, come with a
+  compile-time guarantee of linear performance (section [[*AutoNibble]]).
   
 ** Lessons Learned
    My courses during Lent term took up more time than I anticipated. This lead
@@ -1440,16 +1737,16 @@ list-of-figures:nil
    applied to the whole input sequentially. The second uses queries, which uses
    memoisation to perform different pipeline stages on different parts of the
    input in an arbitrary order. Chomp uses transformations, which were
-   acceptable during early development for the KY type system, and when
-   translating expressions before type checking. For the KY-\lambda type system,
-   code generation requires the original expression structure, whilst
+   acceptable during early development for the \ky{} type system, and when
+   translating expressions before type checking. For the \ky{}-\lambda type
+   system, code generation requires the original expression structure, whilst
    type-checking performs translation first. Keeping these two structures
    together is much more challenging for transformational systems compared to
    query-based ones.
     
    Whilst there was a very low initial cost for using a transformational
    architecture, the cost became very large as the type system became more
-   complex. If I spent more time researching extensions to the KY type system
+   complex. If I spent more time researching extensions to the \ky{} type system
    before development began, I could have avoided this large, deferred cost.
    This advice is almost certainly applicable to future projects I might
    undertake.
@@ -1467,10 +1764,10 @@ list-of-figures:nil
 ** Future Work
    The LM Type system generates the potential for lots of future work. First,
    there is no proof that it is a useful type system. Whilst the modifications
-   to the Hindley-Milner and KY type systems are small, these changes could have
-   drastic consequences to soundness and completeness properties. Formal proofs
-   of these properties are necessary to make sure the LM type system achieves
-   what it sets out to complete.
+   to the Hindley-Milner and \ky{} type systems are small, these changes could
+   have drastic consequences to soundness and completeness properties. Formal
+   proofs of these properties are necessary to make sure the LM type system
+   achieves what it sets out to complete.
     
    Secondly, Chomp could be modified to use the LM type system. Even without
    proof, a practical implementation can provide evidence for the claims made by
@@ -1482,21 +1779,107 @@ list-of-figures:nil
    necessitates changes to the other.
     
    The LM type system probably does not accept expressions for a larger class of
-   languages than the KY type system does. Neither type system accepts an \mre{}
-   such as \( (\epsilon \vert a) \cdot b \), due to the \(\circledast\)
+   languages than the \ky{} type system does. Neither type system accepts an
+   \mre{} such as \( (\epsilon \vert a) \cdot b \), due to the \(\circledast\)
    constraint, even though there is a linear-time parser for this language.
    Searching for a type system for \mres{} that permits accepts a wider range of
    expressions would make writing well-typed Nibble easier.
     
-   Recall that an unrestricted version of the KY-\lambda type system can perform
-   arbitrary computation. This makes it possible to write a repeat-\(n\)-times
-   combinator using the KY-\lambda type system. Due to the way polymorphism is
-   used by the LM type system, such combinators are impossible, because there is
-   no way to encode the natural numbers. Nibble could be extended to support the
-   naturals and other data types, making it possible to write a richer set of
-   parser combinators.
+   Recall that an unrestricted version of the \ky{}-\lambda type system can
+   perform arbitrary computation. This makes it possible to write a
+   repeat-\(n\)-times combinator using the \ky{}-\lambda type system. Due to the
+   way polymorphism is used by the LM type system, such combinators are
+   impossible, because there is no way to encode the natural numbers. Nibble
+   could be extended to support the naturals and other data types, making it
+   possible to write a richer set of parser combinators.
 * References
   \printbibliography[heading=none]{}
 
 * Project Proposal
   TODO!
+  
+* Pink Book
+** Introduction [0/3]
+   * [ ] Principal motivation
+   * [ ] Fits into surrounding CS
+   * [ ] Summary of previous work
+** Preparation [0/6]
+   The work before the code was written.
+
+   * [ ] Complex theories needing understanding
+   * [ ] New programming languages
+   * [ ] Requirements analysis
+   * [ ] Software engineering techniques
+   * [ ] Refinements to proposal
+   * [ ] Starting point
+** Implementation [1/5]
+   What the project managed to produce.
+
+   * [X] Describe key theories
+   * [-] Repository overview
+     * [ ] One page
+     * [ ] High-level structure
+     * [X] Line counts
+   * [ ] Describe key algorithms
+     * [ ] With code
+   * [ ] Demonstrate design for testing
+   * [ ] Describe design choices
+** Evaluation [0/3]
+   Signs of success
+
+   * [ ] Meeting the success criterion
+   * [ ] Meeting goals of Nibble
+   * [ ] Meeting goals of Chomp
+** Conclusion [0/3]
+   * [ ] Return to introduction
+   * [ ] Lessons learned
+   * [ ] Future work
+* List of Tasks
+  - [ ] Structure!
+    - [ ] More section references.
+    - [ ] Introductions need to be higher level
+    - [ ] Headings are big claims!
+  - [ ] Target audience!
+  - [ ] \ky{}-\lambda substitution
+    - [ ] 10.1145/582153.582176
+ 
+  - [ ] https://savage.net.au/Marpa.html
+
+  - [ ] Surjective!
+ 
+  - [ ] Fix first and flast typography.
+  - [ ] Major edit to introduction to improve story telling
+  - [ ] All of Alan's tweaks to the introduction
+  - [ ] Delete depending on amount of extension. Shouldn't be too significant a
+    difference overall
+  - [ ] Reduction => Translation
+  - [ ] Remove a bunch of maths delimiters.
+  - [ ] Describe BNF
+  - [ ] Define lexer in background
+* Incomplete Sections
+** Domain Specific Languages
+** BNF
+** \mres{}
+   #+label: fig:mu-baa
+   #+name: fig:mu-baa
+   #+caption: *TODO: fig:mu-baa*
+   #+begin_figure
+   #+end_figure
+   #+label: fig:mu-hex-colour
+   #+name: fig:mu-hex-colour
+   #+caption: *TODO: fig:mu-hex-colour*
+   #+begin_figure
+   #+end_figure
+   #+label: fig:mu-many-plus
+   #+name: fig:mu-many-plus
+   #+caption: *TODO: fig:mu-many-plus*
+   #+begin_figure
+   #+end_figure
+** The \ky{} Type System
+*** Left Factoring
+** The Hindley-Milner Type System
+** Translators
+*** De Bruijn Indices
+** Rust
+*** Procedural Macros
+*** Traits
