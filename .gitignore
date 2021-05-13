@@ -4,6 +4,7 @@
 *.pdf
 *.tex
 *.lof
+*.lol
 auto/
 _minted-diss/
 *~
