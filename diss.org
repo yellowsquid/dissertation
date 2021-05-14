@@ -1,5 +1,5 @@
 #+latex_class: dissertation
-#+latex_class_options: [12pt,a4paper,twoside,openright]
+#+latex_class_options: [12pt,a4paper,twoside]
 #+latex_header: \usepackage[hyperref=true,url=true,backend=biber,natbib=true]{biblatex}
 #+latex_header: \usepackage[vmargin=2cm,hmargin=1in]{geometry}
 #+latex_header: \usepackage[chapter]{minted}
@@ -24,6 +24,7 @@
 #+latex_header: \newcommand\mres{\(\mu\)-regular expressions}
 #+latex_header: \newcommand\ky{KY}
 #+latex_header: \newcommand\hm{Hindley-Milner}
+#+latex_header: \newcommand\debruijn{De~Bruijn}
 
 # try to avoid widows and orphans
 #+latex_header: \raggedbottom
@@ -351,9 +352,9 @@ list-of-figures:nil
     \(g'\). For brevity, sometimes juxtaposition is used instead of the
     concatenation operator.
 
-    The last expression form is the least-fixed-point operator, \(\mu \alpha.
-    g(\alpha)\). This finds the smallest language for \alpha that contains all
-    the strings in \(g(\alpha)\).
+    The last expression form is the least-fixed-point operator, \(\mu x. g(x)\).
+    This finds the smallest language for \(x\) that contains all the strings in
+    \(g(x)\).
 
     Figure [[fig:mre-sheep]] shows an example \mre{}, again describing the sheep
     language. Like the BNF example (listing [[lst:bnf-sheep]]), it starts with the
@@ -367,7 +368,7 @@ list-of-figures:nil
     #+begin_figure
     \centering
     \begin{math}
-      baa \cdot \mu \alpha. (\epsilon \vert a \cdot \alpha)
+      baa \cdot \mu x. (\epsilon \vee a \cdot x)
     \end{math}
     #+end_figure
     
@@ -389,7 +390,7 @@ list-of-figures:nil
     #+begin_figure
     \centering
     \begin{math}
-      \# \cdot (0 \vert \cdots \vert F) \cdot (0 \vert \cdots \vert F) \cdot (0 \vert \cdots \vert F) \cdot (0 \vert \cdots \vert F) \cdot (0 \vert \cdots \vert F) \cdot (0 \vert \cdots \vert F) \cdot (\epsilon \vert (0 \vert \cdots \vert F) \cdot (0 \vert \cdots \vert F))
+      \# \cdot (0 \vee \cdots \vee F) \cdot (0 \vee \cdots \vee F) \cdot (0 \vee \cdots \vee F) \cdot (0 \vee \cdots \vee F) \cdot (0 \vee \cdots \vee F) \cdot (0 \vee \cdots \vee F) \cdot (\epsilon \vee (0 \vee \cdots \vee F) \cdot (0 \vee \cdots \vee F))
     \end{math}
     #+end_figure
    
@@ -464,15 +465,15 @@ list-of-figures:nil
      #+end_figure
 
      The \ky{} type system uses two different variable contexts, so it can
-     distinguish between /guarded/ and /unguarded/ variables. This is to make
-     sure recursion is safe in the parser implementation. Guarded variables can
-     only occur on the right of a non-empty string.
+     distinguish between /guarded/ and /unguarded/ variables. Guarded variables
+     can only occur on the right of a non-empty string. This is to make sure
+     recursion is deterministic in a naive parser implementation.
      
      Figure [[fig:ky-rules]] gives the full typing judgement of the \ky{} type
-     system. Of particular note, the KYFix rule assumes \( x \) is guarded
-     in the hypothesis, the KYCat rule shifts the guarded context into the
-     unguarded one for the right side, and the KYVar rule can only reference
-     unguarded variables. Krishnaswami and Yallop showed
+     system. Of particular note, the KYFix rule assumes \( x \) is guarded in
+     the hypothesis, the KYCat rule shifts the guarded context into the
+     unguarded one for the argument on the right side, and the KYVar rule can
+     only reference unguarded variables. Krishnaswami and Yallop showed
      cite:10.1145/3314221.3314625 that if an expression has a complete typing
      judgement when the two variable contexts are empty, it is possible to
      compute a parser for the language of that expression.
@@ -512,33 +513,34 @@ list-of-figures:nil
        \end{prooftree}
        & \qquad &
        \begin{prooftree}
-         \hypo{\Gamma; \Delta &\vdash e : \tau} 
-         \hypo{\Gamma, \Delta; \cdot &\vdash e' : \tau'} 
-         \hypo{\tau \circledast \tau'}
-         \infer3[KYCat]{\Gamma; \Delta &\vdash e \cdot e' : \tau \cdot \tau'}
+         \hypo{\Gamma; \Delta, x : \tau &\vdash e : \tau} 
+         \infer1[KYFix]{\Gamma; \Delta &\vdash \mu x. e : \tau}
        \end{prooftree}
        \\
        & \qquad &
        \\
        \begin{prooftree}
-         \hypo{\Gamma; \Delta, x : \tau &\vdash e : \tau} 
-         \infer1[KYFix]{\Gamma; \Delta &\vdash \mu x. e : \tau}
+         \hypo{\Gamma; \Delta &\vdash e : \tau} 
+         \hypo{\Gamma, \Delta; \cdot &\vdash e' : \tau'} 
+         \hypo{\tau \circledast \tau'}
+         \infer3[KYCat]{\Gamma; \Delta &\vdash e \cdot e' : \tau \cdot \tau'}
        \end{prooftree}
        & \qquad &
      \end{array}
      \end{math}
      #+end_figure
 *** The \hm{} Type System
-    The simply-typed lambda calculus is possibly the simplest possible
-    type system, consisting of ground terms and functions only. System F extends
-    the lambda calculus by adding /polymorphism/, where values can have multiple
-    types. Unfortunately, type inference, the problem of assigning types to
+    The simply-typed lambda calculus is possibly the simplest type system,
+    consisting of ground terms and functions only. System F extends the lambda
+    calculus by adding /polymorphism/, where values can have multiple types.
+    Unfortunately, type inference, the problem of assigning types to
     expressions, is undecidable for System F cite:10.1109/LICS.1994.316068.
 
-    To overcome this problem, Hindley and later Milner described a different
-    type system with decidable inference. Like System F, it has polymorphic
-    types and type variables. The difference is that only let expressions can
-    have polymorphic types. The typing rules are detailed in figure [[fig:hm-rules]].
+    To overcome this problem, Hindley cite:10.2307/1995158 and later Milner
+    cite:10.1016/0022-00007890014-4 described a different type system with
+    decidable inference. Like System F, it has polymorphic types and type
+    variables. The difference is that only let expressions can have polymorphic
+    types. The typing rules are detailed in figure [[fig:hm-rules]].
 
      #+label: fig:hm-rules
      #+name: fig:hm-rules
@@ -599,10 +601,10 @@ list-of-figures:nil
 
     We will consider two examples: compilers and parser generators. The
     front-end of a compiler parses the source code into an abstract syntax tree.
-    Functional languages typically introduce De Bruijn indices at this stage,
-    which are introduced in section [[*De Bruijn Indices]]. The middle-end has two
-    roles. The first is to type check the abstract syntax tree. If this fails,
-    then the compiler cannot guarantee that language semantics are preserved, so
+    Functional languages typically introduce \debruijn{} indices at this stage,
+    which are introduced later in this section. The middle-end has two roles.
+    The first is to type check the abstract syntax tree. If this fails, then the
+    compiler cannot guarantee that language semantics are preserved, so
     execution stops. Otherwise, the middle-end produces intermediate code -- the
     derivation for machine code. Using this intermediate representation, the
     back-end produces machine code. In some cases, the back-end is itself a
@@ -627,32 +629,33 @@ list-of-figures:nil
     platforms. Clang and GCC, two popular C compilers, can both act as
     front-ends to the GCC compiler.
 
-**** De Bruijn Indices
+**** \debruijn{} Indices
      Most functional programming languages have a property called
      \alpha-renaming. To summarise, given any program, if you rename all
      occurrences of any variable then the semantics of the program do not
-     change. De Bruijn indices exploit the lexical scoping features of
-     functional programming languages to provide all variables with a name that
-     is invariant under \alpha-renaming. This can simplify many algorithms, such
-     as substitution.
+     change. \debruijn{} indices cite:10.1016/1385-72587290034-0 exploit the
+     lexical scoping features of functional programming languages to provide all
+     variables with a name that is invariant under \alpha-renaming. This can
+     simplify many algorithms, such as substitution.
 
      Consider the OCaml expression ~(fun x y -> x y) y~ . If we try to naively
      evaluate the expression, by substituting ~y~ for ~x~, we get the term ~(fun
      y -> y y)~. However, this has different semantics than the original
-     expression. A correct substitution would be ~(fun z -> y z)~. Notice how we
-     had to rename the bound variable.
+     expression. A correct substitution would be \linebreak ~(fun z -> y z)~.
+     Notice how we had to rename the bound variable.
 
-     Using De Bruijn indices, there is no longer a need to rename variables.
+     Using \debruijn{} indices, there is no longer a need to rename variables.
      Observe how variables form a stack -- first, ~y~ is declared at some point
      earlier in the program. Within the anonymous function, ~x~ and ~y~ are
      bound to new variables, and outside of the function those bindings are
-     popped off. De Bruijn indices represent variables by their position from
+     popped off. \debruijn{} indices represent variables by their position from
      the top of the variable stack.
      
      The OCaml expression from earlier becomes ~(fun . . -> 0 1) 0~ when using
-     De Bruijn indices, assuming that ~y~ was the last variable declared before
-     this expression. Notice how the anonymous function does not need to name
-     its parameters -- the De Bruijn indices uniquely identify every variable.
+     \debruijn{} indices, assuming that ~y~ was the last variable declared
+     before this expression. Notice how the anonymous function does not need to
+     name its parameters -- the \debruijn{} indices uniquely identify every
+     variable.
 
      After substitution, the function becomes ~(fun . -> 1 0)~. First, the
      variable ~x~ eliminated, hence removed from the variable stack. That means
@@ -662,7 +665,7 @@ list-of-figures:nil
      ~0~. As it moved into the function, another variable was pushed onto the
      stack above it, so its index was changed to ~1~.
 
-     By using De Bruijn indices, the originally difficult problem of renaming
+     By using \debruijn{} indices, the originally difficult problem of renaming
      variables during substitution has become a simple transformation of
      incrementing and decrementing some integers.
 *** Rust
@@ -702,9 +705,9 @@ list-of-figures:nil
 
    After completing this primary deliverable, the Nibble language and Chomp
    parser generators could be extended with new features, one after another.
-   This lends itself to the spiral development model, where each new feature
-   undergoes a complete waterfall development cycle -- design, implement,
-   integrate, test.
+   This lends itself to the spiral development model cite:10.1109/2.59, where
+   each new feature undergoes a complete waterfall development cycle -- design,
+   implement, integrate, test.
 
    It is useful to be able to concurrently work on many features at once during
    the design phase, to be able to gauge the difficulty in completing a full
@@ -749,7 +752,7 @@ list-of-figures:nil
 
    A key part of the test suite was AutoNibble, the Chomp-generated parser for
    the Nibble language. If the outputs of AutoNibble and the handwritten parser
-   for the Nibble language used by Chomp were equal, then it was highly likely
+   for Nibble used by Chomp's front-end were equal, then it was highly likely
    that Chomp worked correctly.
 
    When a new feature was added to the project, it could introduce regressions
@@ -765,14 +768,13 @@ list-of-figures:nil
    they include the licenses.
    
 ** Starting Point
-   I closely studied the \ky{} type system before beginning the project. I did
-   not begin any work on possible extensions to it.
+   I closely studied the \ky{} type system before beginning the project.
 
    I had previous experience with using the Rust language for personal projects.
 
    The project builds on ideas about formal languages. These have been studied
    in the /Part IA Discrete Maths/ and /Part IB Compiler Construction/ courses.
-   I also did a small personal project on them during the summer of 2018.
+   I also completed a small personal project on them previously.
 
    Additionally, the project uses concepts from type systems, covered in the
    /Part IB Semantics of Programming Languages/, /Part II Types/ and /Part II
@@ -789,10 +791,10 @@ list-of-figures:nil
   through [[*The Back-End: Code Generation]]).
 
   Section [[*The Nibble Language]] starts by introducing the syntax and semantics of
-  the Nibble language, explaining how it solves the problems of \mres{}. Then in
-  section [[*Type Systems for Nibble]], the design of two type systems for Nibble
-  are described: \ky{}-\lambda in section [[*The \ky{}-\lambda Type System]] and LM
-  in section [[*The LM Type System]].
+  the Nibble language, explaining how it solves the repetition problem of
+  \mres{}. Then in section [[*Type Systems for Nibble]], the design of two type
+  systems for Nibble are described: \ky{}-\lambda in section [[*The \ky{}-\lambda
+  Type System]] and LM in section [[*The LM Type System]].
 
   Next this chapter moves on to describing the Chomp parser generator, starting
   with the structure of its code repository and overall architecture in section
@@ -808,18 +810,44 @@ list-of-figures:nil
    user-friendly alternative to \mres{}. In section [[*\mres{}]], the problem of
    repetition in \mres{} was introduced. Nibble solves this problem by
    introducing let statements and lambda abstractions. The syntax of the Nibble
-   language is given using BNF in appendix [[*The Syntax of Nibble]].
+   language is given using BNF in listing [[lst:nibble-syntax]].
+   
+   #+label: lst:nibble-syntax
+   #+name: lst:nibble-syntax
+   #+caption: The syntax of the Nibble language.
+   #+begin_src bnf
+   <expression> ::= <let-stmt> <expression> | <match-stmt>
+   <let-stmt>   ::= "let" <ident> <arg-list> "=" <expr> ";"
+   <match-stmt> ::= "match" <expr> ";"
+
+   <expr>    ::= <lambda> | <alt>
+   <lambda>  ::= "/" <arg-list> "/" <alt>
+   <alt>     ::= <named> | <named> "|" <alt>
+   <named>   ::= <cat>   | <cat>   ":" <ident>
+   <cat>     ::= <call>  | <call>  "." <cat>
+   <call>    ::= <term>  | <term>      <call>
+   <term>    ::= <epsilon>
+               | <literal>
+               | <ident>
+               | <fix>
+               | "(" <expr> ")"
+   <fix>     ::= "!" <term>
+   <epsilon> ::= "_"
+
+   <arg-list> ::= "" | <ident> <arg-list>
+   <ident>    ::= <letter> | <letter> <ident>
+   #+end_src
 
    For Nibble expressions to be a suitable replacement for \mres{}, Nibble must
    be able to describe the same set of languages. Nibble achieves this by
    directly embedding \mres{}. Listing [[lst:nibble-embeds-mu]] shows how Nibble
-   embeds the \mre{} from figure [[fig:mre-sheep]].
+   embeds the \mre{} from figure [[fig:mre-sheep]], describing the sheep language.
 
    #+label: lst:nibble-embeds-mu
    #+name: lst:nibble-embeds-mu
    #+caption: Nibble expressions can embed \mres{}.
    #+begin_src nibble
-   match "b".!(/x/ (_|"a" . x));
+   match "baa".!(/x/ (_|"a" . x));
    #+end_src
 
    You may notice that Nibble does not embed the \(\bot\) \mre{}. By itself,
@@ -836,15 +864,15 @@ list-of-figures:nil
    \begin{align*}
      \bot \cdot e &= \bot \\
      e \cdot \bot &= \bot \\
-     \bot \mid e &= e \\
-     e \mid \bot &= e \\
+     \bot \vee e &= e \\
+     e \vee \bot &= e \\
      \mu x. \bot &= \bot
    \end{align*}
    #+end_figure
 
    The Nibble language fixes the repetition problem of \mres{}, by introducing
    let statements. Listing [[lst:nibble-let-statement]] demonstrates how Nibble can
-   eliminate the simple repetition from [[fig:mre-hex-colour]].
+   eliminate the simple repetition from figure [[fig:mre-hex-colour]].
 
    #+label: lst:nibble-let-statement
    #+name: lst:nibble-let-statement
@@ -880,10 +908,10 @@ list-of-figures:nil
    expression ~/x/ e~, or through a let-lambda statement ~let x y = e~. The
    let-lambda statements are /syntactic sugar/ for a let-statement binding a
    lambda-expression. They are indistinguishable in their semantics and how they
-   are type checked. The Nibble expression ~let x y = e~ is equivalent to
+   are type checked: the Nibble expression ~let x y = e~ is equivalent to
    ~let x = /y/ e~.
 
-   Notice how in the second line of the figure, the fixed-point operator ~!~
+   Notice how in the second line of the listing, the fixed-point operator ~!~
    takes the lambda expression as an argument. In general, the fixed-point
    operator accepts any expression that is a one-argument first-order function.
    Whilst not demonstrated here, functions can take more than one argument.
@@ -891,11 +919,11 @@ list-of-figures:nil
 ** Type Systems for Nibble
    I have designed two type systems for Nibble: \ky{}-\lambda and LM. The
    \ky{}-\lambda type system is a minimal departure from the \ky{} type system
-   for \mres{}, which was presented in section [[*The \ky{} Type System]], treating
-   lambda abstractions as \mre{} macros. The LM type system is a theoretical
-   system for Nibble, incorporating ideas from the \hm{} type system, introduced
-   in section [[*The \hm{} Type System]]. This adds polymorphic function types on
-   top of the \ky{} type system.
+   for \mres{}, which was presented in section [[*The \ky{} Type System]], by
+   treating lambda abstractions as \mre{} macros. The LM type system is a
+   theoretical system for Nibble, incorporating ideas from the \hm{} type
+   system, introduced in section [[*The \hm{} Type System]]. This adds polymorphic
+   function types on top of the \ky{} type system.
    
 *** The \ky{}-\lambda Type System
     The \ky{}-\lambda type system is a type system for Nibble using the \ky{}
@@ -993,8 +1021,9 @@ list-of-figures:nil
     has some computational benefits, it could cause confusion for users. An
     example is in listing [[lst:kyl-ignores]]. Due to the evaluations strategy,
     because the ill-typed expression ~"a" | "a"~ (it fails the \(\#\)
-    constraint) is bound to ~unused~, the overall expression is well-typed. If
-    someone referenced ~unused~, type checking would unexpectedly fail.
+    constraint) is bound to the unused variable ~unused~, the overall expression
+    is well-typed. If someone referenced ~unused~, type checking would
+    unexpectedly fail.
 
     #+label: lst:kyl-ignores
     #+name: lst:kyl-ignores
@@ -1226,21 +1255,21 @@ list-of-figures:nil
    language -- using a Chomp-generated parser to parse Nibble expressions. This
    parser, dubbed /AutoNibble/, is in the ~autonibble~ directory. This directory
    includes some simple tests of the correctness of AutoNibble, as well as some
-   benchmarks to compare its performance against the handwritten parser.
+   benchmarks to compare its performance against the handwritten parser used by
+   Chomp's front-end.
    
    Finally, there is the ~chomp-bench~ directory. This is a small library for
    comparing the performance of Chomp-generated parsers against handwritten
    parsers and ~lalrpop~-generated parsers, which is an external parser
    generator for Rust. Ideally, this library would be part of ~chomp-macro~.
-   However, limitations in the build system for the other generated parser makes
-   this impossible.
+   However, limitations in the build system for ~lalrpop~ makes this impossible.
 ** The Front-End: Parsing and Normalisation
    The front-end of Chomp is responsible for converting the input stream of
-   characters representing a Nibble expression into Chomp's IR. This occurs in
-   three stages: lexing, which splits the characters in the input stream into
-   different tokens; parsing, which transforms the token stream into a concrete
-   syntax tree; and normalisation, which converts this concrete syntax tree into
-   an abstract syntax tree.
+   characters representing a Nibble expression into an abstract syntax tree.
+   This occurs in three stages: lexing, which splits the characters in the input
+   stream into different tokens; parsing, which transforms the token stream into
+   a concrete syntax tree; and normalisation, which converts this concrete
+   syntax tree into an abstract syntax tree.
    
    In Chomp, the lexing is performed by the external ~syn~ library. This can
    convert streams of characters into tokens from the Rust language. Nibble uses
@@ -1297,7 +1326,7 @@ list-of-figures:nil
    The front-end finishes with normalisation, which converts the concrete syntax
    tree into an abstract syntax tree. This occurs in two stages that occur
    simultaneously. First, syntactic sugar is expanded. Second, variable names
-   are converted to De Bruijn indices (introduced in section [[*De Bruijn
+   are converted to \debruijn{} indices (introduced in section [[*\debruijn{}
    Indices]]).
    
    In section [[*The Nibble Language]], let-lambda statements were introduced as
@@ -1306,13 +1335,17 @@ list-of-figures:nil
    instead of keeping them around as another node type in the abstract syntax
    tree. This reduces complexity in later stages of Chomp.
    
-   The other part of normalisation is conversion to De Bruijn indices. Most of
+   The other part of normalisation is conversion to \debruijn{} indices. Most of
    this work is achieved by the ~Context~ struct, shown in listing
-   [[lst:parse-ctx]].
+   [[lst:parse-ctx]]. As discussed in section [[*\debruijn{} Indices]], when \debruijn{}
+   indices were introduced, variables in lexically-scoped languages form a
+   stack. The most-recently declared variable is at the top of the stack. New
+   variables are pushed on top of the stack, and popped off when they leave
+   scope.
    
    #+label: lst:parse-ctx
    #+name: lst:parse-ctx
-   #+caption: Rust code snippet for conversion to De Bruijn indices.
+   #+caption: Rust code snippet for conversion to \debruijn{} indices.
    #+begin_src rust
      pub struct Context {
          bindings: Vec<Name>,
@@ -1347,11 +1380,6 @@ list-of-figures:nil
          }
      }
    #+end_src
-   
-   As discussed in section [[*De Bruijn Indices]], when De Bruijn indices were
-   introduced, variables in lexically-scoped languages form a stack. The
-   most-recently declared variable is at the top of the stack. New variables are
-   pushed on top of the stack, and popped off when they leave scope.
    
    There are two ways to introduce variables in Nibble. The binding variables
    from let statements are in scope for the rest of the Nibble expression. The
@@ -1469,9 +1497,11 @@ list-of-figures:nil
     #+end_src
     
     An alternative to the visitor pattern in Rust is to define algorithms as
-    traits directly on ~NamedExpression~. However, this would require making
-    ~NamedExpression~ more open, so that it can be fully unwrapped. Changing the
-    representation of ~NamedExpression~ would then be more difficult in future.
+    traits directly on ~NamedExpression~. However, this would require making the
+    representation of ~NamedExpression~ public, so that it can be fully
+    unwrapped. Visitors would also be more tightly coupled to the implementation
+    of ~NamedExpression~. Changing the representation of ~NamedExpression~ would
+    then be more difficult in future.
 *** Translation
     The first step in using the \ky{}-\lambda type system is translation of the
     expression. Recall from section [[*The \ky{}-\lambda Type System]] how
@@ -1485,13 +1515,13 @@ list-of-figures:nil
     and then translates the result.
     
     The substitution is performed by another visitor, ~Substitute~. Given an
-    expression and a De Bruijn index, it searches for uses of that index and
-    replaces them with the expression. In section [[*De Bruijn Indices]], we
-    noted that indices of free variables change inside of lambda bodies. The
-    target index is shifted inside of lambda bodies, and free variables in the
-    substituand need to be renamed.
+    expression and a \debruijn{} index, it searches for uses of that index and
+    replaces them with the expression. In section [[*\debruijn{} Indices]], we noted
+    that indices of free variables change inside of lambda bodies. The target
+    index is shifted inside of lambda bodies, and free variables in the
+    substitute need to be renamed.
     
-    The final visitor for translation changes the De Bruijn indices of free
+    The final visitor for translation changes the \debruijn{} indices of free
     variables in an expression.
     
 *** Inference
@@ -1509,8 +1539,8 @@ list-of-figures:nil
     By looking back to the \ky{} typing rules (figure [[fig:ky-rules]]), the type
     inference rules for other Nibble expressions can be derived. Inference for
     epsilon expressions is trivial -- always the type \tau_\epsilon. By
-    combining the concatenation rule with the character rule, literal expression
-    ~"cw"~ can be shown to always has type \tau_c.
+    combining the KYCat rule with the KYChar rule, a literal expression ~"cw"~
+    can be shown to always has type \tau_c.
     
     By implementing types using ~BTreeSet~ from the Rust standard library to
     store the first and flast sets, alternation becomes simple. First, the type
@@ -1563,7 +1593,7 @@ list-of-figures:nil
     for introducing new variables; and ~with_unguard~ for moving the guarded
     context into the unguarded one. These call their function arguments after
     pushing some data on a stack, and then pop the data off before returning.
-    Like the previous example, most of the work is performed by the
+    Like the front-end context, most of the work is performed by the
     ~get_variable_type~ method.
     
     #+label: lst:type-context
@@ -1616,7 +1646,7 @@ list-of-figures:nil
       }
     #+end_src
     
-    Because the abstract syntax tree of Nibble uses De Bruijn indices to
+    Because the abstract syntax tree of Nibble uses \debruijn{} indices to
     represent variables, the variable context can be represented by a pair of
     stacks. The ~vars~ field stores the stack of types in the context. The type
     of a variable is then the item in ~vars~ indexed from the top of the stack.
@@ -1639,11 +1669,12 @@ list-of-figures:nil
    eliminate work generating code for duplicate expressions using interning.
    
    This interning occurs in three phases. First, each \mre{} is mapped to a
-   handle. This is done structurally, such that two identical \mres{} receive
+   /handle/. This is done structurally, such that two identical \mres{} receive
    the same handle. Next, the set of all handles that can be reached from the
    top-level \mre{} handle are computed. After this, code is generated only for
    the \mres{} that were reached. In practice, the first and last phases are
-   computed at once, and the second step performs a collation of results.
+   computed in one pass, and the second step collates the necessary generated
+   code.
    
    Mapping expressions to handles uses many caches, one for each type of
    expression. First, the handles of all sub-expressions are found. Next, the
@@ -1732,12 +1763,12 @@ list-of-figures:nil
    and produces an abstract syntax tree of a Nibble expression. An external
    lexer converts the character stream to a sequence of Rust tokens. A parser
    then converts the Rust tokens into a concrete syntax tree. A normalisation
-   step then expands syntactic sugar and introduces De Bruijn indices.
+   step then expands syntactic sugar and introduces \debruijn{} indices.
    
    The middle-end is responsible for type inference using the \ky{}-\lambda type
    system. First, the Nibble expression represented by the abstract syntax tree
-   is translated to a \mre{} with call-by-name evaluation. Next, the \ky{} type system is used to infer the
-   type of this \mre{}.   
+   is translated to a \mre{} with call-by-name evaluation. Next, the \ky{} type
+   system is used to infer the type of this \mre{}.
    
    Finally, the back-end performs code generation. The type-annotated \mre{} is
    expanded into a sequence of Rust tokens describing a parser for its language.
@@ -1879,6 +1910,10 @@ list-of-figures:nil
    first discuss the language classes accepted by both \ky{}-typed Nibble and
    ~lalrpop~, and the consequences on the form of descriptions. Then I look at
    how to integrate both Chomp and ~lalrpop~ into a project build system.
+
+   Due to limitations of the \ky{} type system, \ky{}-\lambda-typed Nibble can
+   only describe LL languages. Meanwhile, ~lalrpop~ can describe the wider class
+   of LR languages.
    
    One practical example of these differences in allowed language descriptions
    is shown in figure [[fig:compare-number]]. This shows how to parse an
@@ -1886,8 +1921,8 @@ list-of-figures:nil
    ~lalrpop~ has no problems with having the optional sign as a prefix to the
    number. On the other hand, the \ky{}-\lambda typing rules use the
    \(\circledast\) constraint to prevent the prefix of a concatenation from
-   being \(\textsc{Null}\). This means ~number~ is used twice -- once for
-   unsigned numbers, and another for signed numbers.
+   containing the empty string. This means ~number~ must be used twice -- once
+   for unsigned numbers, and another for signed numbers.
    
    #+label: fig:compare-number
    #+name: fig:compare-number
@@ -2019,10 +2054,10 @@ list-of-figures:nil
    
    ~lalrpop~ avoids the left factoring problem via two mechanisms. The first is
    that it accepts a larger range of language descriptions, as described above.
-   Secondly, it has a lexing stage. Section [[*Translators]] talks about lexers in
-   some depth. To summarise, the input character stream is split into different
-   tokens, which is given to the parser. The lexer decides whether a particular
-   sequence of characters is a keyword or just a regular name.
+   Secondly, it has a lexing stage. A lexer splits the input character stream
+   into different tokens, which are then given to the parser. The lexer decides
+   whether a particular sequence of characters is a keyword or just a regular
+   name.
    
    Chomp does not use a lexer. Whilst lexers are useful to avoid left factoring,
    they are not necessary. Throughout the project, a more powerful type system
@@ -2041,10 +2076,10 @@ list-of-figures:nil
    the same ~Convert~ trait used in the front-end of Chomp.
    
    Chomp is easier to integrate into projects than ~lalrpop~. Chomp uses Rust's
-   procedural-macro system to transform Nibble code embedded in a Rust file into
-   a Chomp-generated parser. ~lalrpop~ instead requires an external build script
-   to first convert ~lalrpop~ descriptions into Rust source code, which has to
-   be explicitly included in the project.
+   procedural-macro system to transform a Nibble expression embedded in a Rust
+   file into a Chomp-generated parser. ~lalrpop~ instead requires an external
+   build script to first convert ~lalrpop~ descriptions into Rust source code,
+   which has to be explicitly included in the project.
    
    Finally, Chomp computes explicit types for Nibble expressions. This has
    benefits in terms of error reporting over ~lalrpop~. Under the \ky{} type
@@ -2088,6 +2123,12 @@ list-of-figures:nil
     measurements with respect to the sample size, you can compute \(\bar{t}\)
     and \(\bar{\sigma^2}\), an estimate for \(t\) and the variance of the
     estimate.
+
+    Due to the deterministic nature of parsers, and the number of iterations
+    performed during benchmarking, wall-time is a suitable proxy measurement for
+    processor time. The primary source of non-determinism in measurements will
+    be hardware interrupts, which were minimised by running benchmarks on an
+    idle system.
 
     Only one benchmark was performed at a time. Every benchmark used a single
     thread of execution. The measurements were collected on a desktop computer
@@ -2244,7 +2285,7 @@ list-of-figures:nil
    I conjectured that the LM type system does not accept expressions for a
    larger class of languages than the \ky{} type system does. Unfortunately both
    type systems reject some simple expressions that can be parsed in linear
-   time, for example the \mre{} \((\epsilon \vert a) \cdot b \), representing an
+   time, for example the \mre{} \((\epsilon \vee a) \cdot b \), representing an
    optional prefix symbol \(a\) before the symbol \(b\). Searching for a type
    system for \mres{} that permits accepts a wider range of expressions would
    make writing well-typed Nibble easier.
@@ -2262,33 +2303,6 @@ list-of-figures:nil
 
 \appendix
 
-* The Syntax of Nibble
-  
-   #+label: lst:nibble-syntax
-   #+name: lst:nibble-syntax
-   #+begin_src bnf
-   <expression> ::= <let-stmt> <expression> | <match-stmt>
-   <let-stmt>   ::= "let" <ident> <arg-list> "=" <expr> ";"
-   <match-stmt> ::= "match" <expr> ";"
-
-   <expr>    ::= <lambda> | <alt>
-   <lambda>  ::= "/" <arg-list> "/" <alt>
-   <alt>     ::= <named> | <named> "|" <alt>
-   <named>   ::= <cat>   | <cat>   ":" <ident>
-   <cat>     ::= <call>  | <call>  "." <cat>
-   <call>    ::= <term>  | <term>      <call>
-   <term>    ::= <epsilon>
-               | <literal>
-               | <ident>
-               | <fix>
-               | "(" <expr> ")"
-   <fix>     ::= "!" <term>
-   <epsilon> ::= "_"
-
-   <arg-list> ::= "" | <ident> <arg-list>
-   <ident>    ::= <letter> | <letter> <ident>
-   #+end_src
-   
 * Project Proposal
   \begin{refsection}
   \input{proposal.tex}
